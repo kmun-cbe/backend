@@ -1,0 +1,208 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  password          String
+  firstName         String
+  lastName          String
+  phone             String?
+  role              UserRole  @default(DELEGATE)
+  isActive          Boolean   @default(true)
+  lastLogin         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Delegate specific fields
+  school            String?
+  grade             String?
+  experience        String?
+  emergencyContact  String?
+  dietaryReqs       String?
+  
+  // Registration
+  registrations     Registration[]
+  
+  // Check-in/out
+  checkIns          CheckIn[]
+  
+  // Attendance
+  attendanceRecords AttendanceRecord[]
+  
+  // Marks (for delegates)
+  marks             Mark[]
+  
+  @@map("users")
+}
+
+model Committee {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  type        String   // GA, SC, etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  portfolios    Portfolio[]
+  registrations Registration[]
+  sessions      Session[]
+  
+  @@map("committees")
+}
+
+model Portfolio {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  committeeId String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  committee     Committee      @relation(fields: [committeeId], references: [id])
+  registrations Registration[]
+  
+  @@map("portfolios")
+}
+
+model Registration {
+  id          String            @id @default(cuid())
+  userId      String
+  committeeId String
+  portfolioId String?
+  status      RegistrationStatus @default(PENDING)
+  paymentStatus PaymentStatus   @default(PENDING)
+  amount      Float
+  allocatedCommittee String?
+  allocatedPortfolio String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  
+  user      User       @relation(fields: [userId], references: [id])
+  committee Committee  @relation(fields: [committeeId], references: [id])
+  portfolio Portfolio? @relation(fields: [portfolioId], references: [id])
+  
+  @@unique([userId, committeeId])
+  @@map("registrations")
+}
+
+model CheckIn {
+  id        String    @id @default(cuid())
+  userId    String
+  checkInAt DateTime  @default(now())
+  checkOutAt DateTime?
+  kitGiven  Boolean   @default(false)
+  kitReturned Boolean @default(false)
+  notes     String?
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@map("check_ins")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  committeeId String
+  name        String
+  date        DateTime
+  startTime   String
+  endTime     String
+  location    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  committee         Committee          @relation(fields: [committeeId], references: [id])
+  attendanceRecords AttendanceRecord[]
+  
+  @@map("sessions")
+}
+
+model AttendanceRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  sessionId String
+  status    AttendanceStatus @default(ABSENT)
+  markedAt  DateTime @default(now())
+  notes     String?
+  
+  user    User    @relation(fields: [userId], references: [id])
+  session Session @relation(fields: [sessionId], references: [id])
+  
+  @@unique([userId, sessionId])
+  @@map("attendance_records")
+}
+
+model Mark {
+  id        String   @id @default(cuid())
+  userId    String
+  category  String   // "Research", "Speaking", "Diplomacy", etc.
+  score     Float
+  maxScore  Float    @default(100)
+  feedback  String?
+  gradedBy  String   // User ID of grader
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@map("marks")
+}
+
+model Contact {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  subject     String
+  message     String
+  status      String   @default("pending") // pending, resolved, archived
+  submittedAt DateTime @default(now())
+  resolvedAt  DateTime?
+  notes       String?
+  
+  @@map("contacts")
+}
+
+enum UserRole {
+  DELEGATE
+  COMMITTEE_DIRECTOR
+  DELEGATE_AFFAIRS
+  HOSPITALITY_ADMIN
+  FRONT_DESK_ADMIN
+  DEV_ADMIN
+  SOFTWARE_ADMIN
+  REGISTRATION_ADMIN
+  ALLOCATION_ADMIN
+  EXECUTIVE_BOARD
+  PARTICIPANT
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLISTED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}

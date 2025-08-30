@@ -1,0 +1,186 @@
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('🌱 Starting database seeding...');
+
+  // Create default admin users
+  const hashedPassword = await bcrypt.hash('kmun2025', 12);
+
+  const users = [
+    {
+      firstName: 'Dev',
+      lastName: 'Admin',
+      email: 'dev@mun.com',
+      password: hashedPassword,
+      phone: '+91 9876543211',
+      role: 'DEV_ADMIN',
+      school: 'MUN Organization',
+      grade: 'Staff',
+      isActive: true
+    },
+    {
+      firstName: 'John',
+      lastName: 'Delegate',
+      email: 'delegate@mun.com',
+      password: hashedPassword,
+      phone: '+91 9876543210',
+      role: 'DELEGATE',
+      school: 'Harvard University',
+      grade: 'Undergraduate',
+      isActive: true
+    },
+    {
+      firstName: 'Delegate',
+      lastName: 'Affairs',
+      email: 'affairs@mun.com',
+      password: hashedPassword,
+      phone: '+91 9876543212',
+      role: 'DELEGATE_AFFAIRS',
+      school: 'MUN Organization',
+      grade: 'Staff',
+      isActive: true
+    },
+    {
+      firstName: 'Front',
+      lastName: 'Desk',
+      email: 'frontdesk@mun.com',
+      password: hashedPassword,
+      phone: '+91 9876543213',
+      role: 'FRONT_DESK_ADMIN',
+      school: 'MUN Organization',
+      grade: 'Staff',
+      isActive: true
+    },
+    {
+      firstName: 'Committee',
+      lastName: 'Director',
+      email: 'director@mun.com',
+      password: hashedPassword,
+      phone: '+91 9876543214',
+      role: 'COMMITTEE_DIRECTOR',
+      school: 'MUN Organization',
+      grade: 'Staff',
+      isActive: true
+    },
+    {
+      firstName: 'Hospitality',
+      lastName: 'Admin',
+      email: 'hospitality@mun.com',
+      password: hashedPassword,
+      phone: '+91 9876543215',
+      role: 'HOSPITALITY_ADMIN',
+      school: 'MUN Organization',
+      grade: 'Staff',
+      isActive: true
+    }
+  ];
+
+  console.log('👥 Creating users...');
+  const createdUsers = [];
+  for (const userData of users) {
+    const existingUser = await prisma.user.findFirst({
+      where: { email: userData.email }
+    });
+
+    if (!existingUser) {
+      const user = await prisma.user.create({
+        data: userData
+      });
+      createdUsers.push(user);
+      console.log(`✅ Created user: ${userData.email}`);
+    } else {
+      createdUsers.push(existingUser);
+      console.log(`⏭️  User already exists: ${userData.email}`);
+    }
+  }
+
+  // Create committees
+  const committees = [
+    {
+      name: 'United Nations Security Council (UNSC)',
+      description: 'Addressing global security challenges and international peace',
+      type: 'SC',
+      isActive: true
+    },
+    {
+      name: 'United Nations General Assembly (UNGA)',
+      description: 'Deliberating on international cooperation and development',
+      type: 'GA',
+      isActive: true
+    },
+    {
+      name: 'World Health Organization (WHO)',
+      description: 'Addressing global health challenges and policy',
+      type: 'SPECIALIZED',
+      isActive: true
+    },
+    {
+      name: 'International Court of Justice (ICJ)',
+      description: 'Legal disputes between nations and international law',
+      type: 'COURT',
+      isActive: true
+    }
+  ];
+
+  console.log('🏛️ Creating committees...');
+  for (const committeeData of committees) {
+    const existingCommittee = await prisma.committee.findFirst({
+      where: { name: committeeData.name }
+    });
+
+    if (!existingCommittee) {
+      await prisma.committee.create({
+        data: committeeData
+      });
+      console.log(`✅ Created committee: ${committeeData.name}`);
+    } else {
+      console.log(`⏭️  Committee already exists: ${committeeData.name}`);
+    }
+  }
+
+  // Create sample registrations
+  console.log('📝 Creating sample registrations...');
+  
+  // Find the John Delegate user and a committee
+  const johnDelegate = createdUsers.find(user => user.email === 'delegate@mun.com');
+  const unscCommittee = await prisma.committee.findFirst({
+    where: { name: 'United Nations Security Council (UNSC)' }
+  });
+  
+  if (johnDelegate && unscCommittee) {
+    const existingReg = await prisma.registration.findFirst({
+      where: { userId: johnDelegate.id }
+    });
+
+    if (!existingReg) {
+      await prisma.registration.create({
+        data: {
+          userId: johnDelegate.id,
+          committeeId: unscCommittee.id,
+          status: 'APPROVED',
+          paymentStatus: 'COMPLETED',
+          amount: 2500.0
+        }
+      });
+      console.log(`✅ Created registration for: ${johnDelegate.email}`);
+    } else {
+      console.log(`⏭️  Registration already exists for: ${johnDelegate.email}`);
+    }
+  } else {
+    console.log('⚠️  John Delegate user or UNSC committee not found, skipping registration creation');
+  }
+
+  console.log('🎉 Database seeding completed successfully!');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Error during seeding:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
