@@ -90,6 +90,7 @@ model Registration {
   user      User       @relation(fields: [userId], references: [id])
   committee Committee  @relation(fields: [committeeId], references: [id])
   portfolio Portfolio? @relation(fields: [portfolioId], references: [id])
+  payments  Payment[]
   
   @@unique([userId, committeeId])
   @@map("registrations")
@@ -170,6 +171,61 @@ model Contact {
   notes       String?
   
   @@map("contacts")
+}
+
+model Pricing {
+  id                  String   @id @default(cuid())
+  internalDelegate    Float    @default(2500)
+  externalDelegate    Float    @default(3500)
+  accommodationCharge Float    @default(1500)
+  earlyBirdDiscount   Float    @default(500)
+  groupDiscount       Float    @default(200)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  @@map("pricing")
+}
+
+model Popup {
+  id        String   @id @default(cuid())
+  heading   String
+  text      String
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("popups")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  registrationId  String
+  amount          Float
+  currency        String        @default("INR")
+  paymentMethod   String        @default("razorpay")
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?
+  paymentLink     String?
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  registration Registration @relation(fields: [registrationId], references: [id])
+  
+  @@map("payments")
+}
+
+model EmailTemplate {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  subject   String
+  body      String
+  variables String[] // Array of variable names used in template
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("email_templates")
 }
 
 enum UserRole {
