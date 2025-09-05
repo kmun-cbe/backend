@@ -22,6 +22,7 @@ const portfolioValidation = [
 
 // Committee Routes
 router.get('/', committeeController.getCommittees);
+router.get('/institution/:institutionType', committeeController.getCommitteesByInstitutionType);
 router.get('/:id', committeeController.getCommitteeById);
 router.get('/stats', committeeController.getCommitteeStats);
 

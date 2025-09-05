@@ -71,7 +71,7 @@ class CommitteeController {
 
   async createCommittee(req, res) {
     try {
-      const { name, description, capacity, topics = [], chairs = [], portfolios = [], image } = req.body;
+      const { name, description, capacity, topics = [], chairs = [], portfolios = [], image, institutionType } = req.body;
 
       const committee = await prisma.committee.create({
         data: {
@@ -82,6 +82,7 @@ class CommitteeController {
           chairs: JSON.stringify(chairs),
           portfolios: JSON.stringify(portfolios),
           image,
+          institutionType,
         },
       });
 
@@ -379,6 +380,41 @@ class CommitteeController {
       res.status(500).json({
         success: false,
         message: 'Failed to get committee statistics',
+        error: error.message,
+      });
+    }
+  }
+
+  // Get committees by institution type
+  async getCommitteesByInstitutionType(req, res) {
+    try {
+      const { institutionType } = req.params;
+
+      const committees = await prisma.committee.findMany({
+        where: { 
+          isActive: true,
+          institutionType: institutionType 
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      // Parse JSON fields
+      const parsedCommittees = committees.map(committee => ({
+        ...committee,
+        topics: JSON.parse(committee.topics || '[]'),
+        chairs: JSON.parse(committee.chairs || '[]'),
+        portfolios: JSON.parse(committee.portfolios || '[]'),
+      }));
+
+      res.json({
+        success: true,
+        data: parsedCommittees,
+      });
+    } catch (error) {
+      console.error('Get committees by institution type error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get committees by institution type',
         error: error.message,
       });
     }

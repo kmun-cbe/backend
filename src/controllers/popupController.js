@@ -5,7 +5,11 @@ const prisma = new PrismaClient();
 class PopupController {
   async getPopup(req, res) {
     try {
-      let popup = await prisma.popup.findFirst();
+      let popup = await prisma.popup.findFirst({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
 
       if (!popup) {
         // Create default popup if none exists
@@ -36,24 +40,37 @@ class PopupController {
     try {
       const { heading, text, isActive } = req.body;
 
-      let popup = await prisma.popup.findFirst();
+      // Validate required fields
+      if (!heading || !text) {
+        return res.status(400).json({
+          success: false,
+          message: 'Heading and text are required'
+        });
+      }
+
+      let popup = await prisma.popup.findFirst({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
 
       if (popup) {
         // Update existing popup
         popup = await prisma.popup.update({
           where: { id: popup.id },
           data: {
-            heading: heading || popup.heading,
-            text: text || popup.text,
+            heading: heading,
+            text: text,
             isActive: isActive !== undefined ? isActive : popup.isActive,
+            updatedAt: new Date()
           },
         });
       } else {
         // Create new popup
         popup = await prisma.popup.create({
           data: {
-            heading: heading || 'Welcome to K-MUN 2025!',
-            text: text || 'Registration is now open for Kumaraguru Model United Nations 2025.',
+            heading: heading,
+            text: text,
             isActive: isActive !== undefined ? isActive : false,
           },
         });
@@ -78,12 +95,23 @@ class PopupController {
     try {
       const { isActive } = req.body;
 
-      let popup = await prisma.popup.findFirst();
+      if (typeof isActive !== 'boolean') {
+        return res.status(400).json({
+          success: false,
+          message: 'isActive must be a boolean value',
+        });
+      }
+
+      let popup = await prisma.popup.findFirst({
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
 
       if (!popup) {
         return res.status(404).json({
           success: false,
-          message: 'No popup found',
+          message: 'No popup found. Please create a popup first.',
         });
       }
 
@@ -91,6 +119,7 @@ class PopupController {
         where: { id: popup.id },
         data: {
           isActive: isActive,
+          updatedAt: new Date()
         },
       });
 

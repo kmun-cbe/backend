@@ -44,13 +44,14 @@ model User {
 }
 
 model Committee {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  description String?
-  type        String   // GA, SC, etc.
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String   @unique
+  description     String?
+  type            String   // GA, SC, etc.
+  institutionType String   // school or college
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
   
   portfolios    Portfolio[]
   registrations Registration[]
