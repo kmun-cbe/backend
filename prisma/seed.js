@@ -101,26 +101,44 @@ async function main() {
   const committees = [
     {
       name: 'United Nations Security Council (UNSC)',
-      description: 'Addressing global security challenges and international peace',
+      description: 'Addressing global security challenges and international peace. Delegates will debate on critical security issues affecting global stability.',
       type: 'SC',
+      institutionType: 'college',
       isActive: true
     },
     {
       name: 'United Nations General Assembly (UNGA)',
-      description: 'Deliberating on international cooperation and development',
+      description: 'Deliberating on international cooperation and development. The main deliberative body of the United Nations.',
       type: 'GA',
+      institutionType: 'college',
       isActive: true
     },
     {
       name: 'World Health Organization (WHO)',
-      description: 'Addressing global health challenges and policy',
+      description: 'Addressing global health challenges and policy. Focus on international health cooperation and pandemic response.',
       type: 'SPECIALIZED',
+      institutionType: 'college',
       isActive: true
     },
     {
       name: 'International Court of Justice (ICJ)',
-      description: 'Legal disputes between nations and international law',
+      description: 'Legal disputes between nations and international law. The principal judicial organ of the United Nations.',
       type: 'COURT',
+      institutionType: 'college',
+      isActive: true
+    },
+    {
+      name: 'United Nations Educational, Scientific and Cultural Organization (UNESCO)',
+      description: 'Promoting international collaboration in education, science, culture and communication.',
+      type: 'SPECIALIZED',
+      institutionType: 'school',
+      isActive: true
+    },
+    {
+      name: 'United Nations Children\'s Fund (UNICEF)',
+      description: 'Protecting children\'s rights and ensuring their well-being worldwide.',
+      type: 'SPECIALIZED',
+      institutionType: 'school',
       isActive: true
     }
   ];

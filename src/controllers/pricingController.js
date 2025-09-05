@@ -13,9 +13,6 @@ class PricingController {
           data: {
             internalDelegate: 2500,
             externalDelegate: 3500,
-            accommodationCharge: 1500,
-            earlyBirdDiscount: 500,
-            groupDiscount: 200,
           },
         });
       }
@@ -38,10 +35,7 @@ class PricingController {
     try {
       const {
         internalDelegate,
-        externalDelegate,
-        accommodationCharge,
-        earlyBirdDiscount,
-        groupDiscount
+        externalDelegate
       } = req.body;
 
       let pricing = await prisma.pricing.findFirst();
@@ -53,9 +47,6 @@ class PricingController {
           data: {
             internalDelegate: parseInt(internalDelegate) || 2500,
             externalDelegate: parseInt(externalDelegate) || 3500,
-            accommodationCharge: parseInt(accommodationCharge) || 1500,
-            earlyBirdDiscount: parseInt(earlyBirdDiscount) || 500,
-            groupDiscount: parseInt(groupDiscount) || 200,
           },
         });
       } else {
@@ -64,9 +55,6 @@ class PricingController {
           data: {
             internalDelegate: parseInt(internalDelegate) || 2500,
             externalDelegate: parseInt(externalDelegate) || 3500,
-            accommodationCharge: parseInt(accommodationCharge) || 1500,
-            earlyBirdDiscount: parseInt(earlyBirdDiscount) || 500,
-            groupDiscount: parseInt(groupDiscount) || 200,
           },
         });
       }

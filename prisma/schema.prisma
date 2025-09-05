@@ -30,6 +30,7 @@ model User {
   
   // Registration
   registrations     Registration[]
+  registrationForms RegistrationForm[]
   
   // Check-in/out
   checkIns          CheckIn[]
@@ -73,6 +74,41 @@ model Portfolio {
   registrations Registration[]
   
   @@map("portfolios")
+}
+
+model RegistrationForm {
+  id                    String   @id @default(cuid())
+  userId                String
+  firstName             String
+  lastName              String
+  email                 String
+  phone                 String
+  gender                String
+  isKumaraguru          Boolean
+  rollNumber            String?
+  institutionType       String?
+  institution           String?
+  cityOfInstitution     String?
+  stateOfInstitution    String?
+  grade                 String?
+  totalMuns             Int
+  requiresAccommodation Boolean  @default(false)
+  committeePreference1  String
+  portfolioPreference1  String
+  committeePreference2  String
+  portfolioPreference2  String
+  committeePreference3  String
+  portfolioPreference3  String
+  idDocument            String
+  munResume             String?
+  status                String   @default("PENDING")
+  submittedAt           DateTime @default(now())
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@map("registration_forms")
 }
 
 model Registration {
@@ -175,14 +211,11 @@ model Contact {
 }
 
 model Pricing {
-  id                  String   @id @default(cuid())
-  internalDelegate    Float    @default(2500)
-  externalDelegate    Float    @default(3500)
-  accommodationCharge Float    @default(1500)
-  earlyBirdDiscount   Float    @default(500)
-  groupDiscount       Float    @default(200)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id               String   @id @default(cuid())
+  internalDelegate Float    @default(2500)
+  externalDelegate Float    @default(3500)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
   
   @@map("pricing")
 }

@@ -10,8 +10,7 @@ class RegistrationController {
   async createRegistration(req, res) {
     try {
       const {
-        firstName,
-        lastName,
+        fullName,
         email,
         phone,
         gender,
@@ -19,8 +18,11 @@ class RegistrationController {
         rollNumber,
         institutionType,
         institution,
+        cityOfInstitution,
+        stateOfInstitution,
         grade,
         totalMuns,
+        requiresAccommodation,
         committeePreference1,
         portfolioPreference1,
         committeePreference2,
@@ -28,6 +30,11 @@ class RegistrationController {
         committeePreference3,
         portfolioPreference3,
       } = req.body;
+
+      // Split fullName into firstName and lastName
+      const nameParts = fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       // Validate required files
       if (!req.files || !req.files.idDocument) {
@@ -52,8 +59,8 @@ class RegistrationController {
         },
       });
 
-      // Create registration
-      const registration = await prisma.registration.create({
+      // Create registration form
+      const registration = await prisma.registrationForm.create({
         data: {
           userId: user.id,
           firstName,
@@ -65,8 +72,11 @@ class RegistrationController {
           rollNumber,
           institutionType,
           institution,
+          cityOfInstitution,
+          stateOfInstitution,
           grade,
-          totalMuns,
+          totalMuns: parseInt(totalMuns) || 0,
+          requiresAccommodation: requiresAccommodation === 'yes',
           committeePreference1,
           portfolioPreference1,
           committeePreference2,
@@ -138,7 +148,7 @@ class RegistrationController {
       }
 
       const [registrations, total] = await Promise.all([
-        prisma.registration.findMany({
+        prisma.registrationForm.findMany({
           where,
           include: {
             user: {

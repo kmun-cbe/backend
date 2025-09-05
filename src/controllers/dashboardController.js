@@ -5,6 +5,8 @@ const prisma = new PrismaClient();
 class DashboardController {
   async getStats(req, res) {
     try {
+      console.log('Getting dashboard stats...');
+      
       // Get counts from database
       const [
         totalUsers,
@@ -27,6 +29,15 @@ class DashboardController {
           where: { status: 'pending' }
         })
       ]);
+      
+      console.log('Dashboard stats retrieved:', {
+        totalUsers,
+        totalRegistrations,
+        confirmedPayments,
+        activeCommittees,
+        totalContacts,
+        pendingContacts
+      });
 
       // Calculate percentage changes (mock data for now)
       const stats = [
@@ -80,6 +91,11 @@ class DashboardController {
       });
     } catch (error) {
       console.error('Get dashboard stats error:', error);
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
       res.status(500).json({
         success: false,
         message: 'Failed to get dashboard statistics',

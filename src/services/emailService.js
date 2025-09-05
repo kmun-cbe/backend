@@ -3,21 +3,48 @@ import { prisma } from '../config/database.js';
 
 class EmailService {
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
+    this.gmailTransporter = nodemailer.createTransport({
+      host: process.env.GMAIL_SMTP_HOST || 'smtp.gmail.com',
+      port: process.env.GMAIL_SMTP_PORT || 587,
       secure: false,
       auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        user: process.env.GMAIL_SMTP_USER,
+        pass: process.env.GMAIL_SMTP_PASS,
       },
     });
+
+    this.outlookTransporter = nodemailer.createTransport({
+      host: process.env.OUTLOOK_SMTP_HOST || 'smtp-mail.outlook.com',
+      port: process.env.OUTLOOK_SMTP_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.OUTLOOK_SMTP_USER,
+        pass: process.env.OUTLOOK_SMTP_PASS,
+      },
+    });
+
+    // Default transporter (for backward compatibility)
+    this.transporter = this.gmailTransporter;
   }
 
-  async sendEmail({ to, subject, html, text, attachments = [] }) {
+  getTransporter(provider = 'gmail') {
+    switch (provider.toLowerCase()) {
+      case 'gmail':
+        return this.gmailTransporter;
+      case 'outlook':
+        return this.outlookTransporter;
+      default:
+        return this.gmailTransporter;
+    }
+  }
+
+  async sendEmail({ to, subject, html, text, attachments = [], provider = 'gmail' }) {
     try {
+      const transporter = this.getTransporter(provider);
+      const fromEmail = provider === 'gmail' ? process.env.GMAIL_SMTP_USER : process.env.OUTLOOK_SMTP_USER;
+      
       const mailOptions = {
-        from: `"Kumaraguru MUN 2025" <${process.env.SMTP_USER}>`,
+        from: `"Kumaraguru MUN 2025" <${fromEmail}>`,
         to: Array.isArray(to) ? to.join(', ') : to,
         subject,
         html,
@@ -25,11 +52,11 @@ class EmailService {
         attachments,
       };
 
-      const result = await this.transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', result.messageId);
+      const result = await transporter.sendMail(mailOptions);
+      console.log(`Email sent successfully via ${provider}:`, result.messageId);
       return { success: true, messageId: result.messageId };
     } catch (error) {
-      console.error('Email sending failed:', error);
+      console.error(`Email sending failed via ${provider}:`, error);
       return { success: false, error: error.message };
     }
   }
@@ -98,7 +125,7 @@ class EmailService {
     });
   }
 
-  async sendBulkEmail(recipients, subject, content, targetAudience = 'ALL') {
+  async sendBulkEmail(recipients, subject, content, provider = 'gmail', targetAudience = 'ALL') {
     try {
       const results = [];
       
@@ -107,6 +134,7 @@ class EmailService {
           to: recipient.email,
           subject,
           html: content,
+          provider,
         });
         
         results.push({

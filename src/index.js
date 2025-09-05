@@ -26,6 +26,7 @@ import resourceRoutes from './routes/resources.js';
 import activityLogRoutes from './routes/activityLogs.js';
 import dashboardRoutes from './routes/dashboard.js';
 import healthRoutes from './routes/health.js';
+import mailerRoutes from './routes/mailer.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -63,6 +64,7 @@ app.use('/api/resources', resourceRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/health', healthRoutes);
+app.use('/api/mailer', mailerRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -99,7 +101,8 @@ app.get('/', (req, res) => {
       resources: '/api/resources',
       activityLogs: '/api/activity-logs',
       dashboard: '/api/dashboard',
-      health: '/api/health'
+      health: '/api/health',
+      mailer: '/api/mailer'
     }
   });
 });

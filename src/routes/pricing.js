@@ -14,9 +14,6 @@ const pricingValidation = [
   body('externalDelegate')
     .isFloat({ min: 0 })
     .withMessage('External delegate price must be a positive number'),
-  body('accommodationCharge')
-    .isFloat({ min: 0 })
-    .withMessage('Accommodation charge must be a positive number'),
 ];
 
 // Routes
