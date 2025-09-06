@@ -112,7 +112,7 @@ class CommitteeController {
   async updateCommittee(req, res) {
     try {
       const { id } = req.params;
-      const { name, description, capacity, topics = [], chairs = [], portfolios = [], image } = req.body;
+      const { name, description, capacity, topics = [], chairs = [], portfolios = [], image, institutionType } = req.body;
 
       const committee = await prisma.committee.update({
         where: { id },
@@ -124,6 +124,7 @@ class CommitteeController {
           chairs: JSON.stringify(chairs),
           portfolios: JSON.stringify(portfolios),
           image,
+          institutionType,
         },
       });
 
@@ -415,6 +416,37 @@ class CommitteeController {
       res.status(500).json({
         success: false,
         message: 'Failed to get committees by institution type',
+        error: error.message,
+      });
+    }
+  }
+
+  // Get first two committees for homepage
+  async getFeaturedCommittees(req, res) {
+    try {
+      const committees = await prisma.committee.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: 'asc' },
+        take: 2,
+      });
+
+      // Parse JSON fields
+      const parsedCommittees = committees.map(committee => ({
+        ...committee,
+        topics: JSON.parse(committee.topics || '[]'),
+        chairs: JSON.parse(committee.chairs || '[]'),
+        portfolios: JSON.parse(committee.portfolios || '[]'),
+      }));
+
+      res.json({
+        success: true,
+        data: parsedCommittees,
+      });
+    } catch (error) {
+      console.error('Get featured committees error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get featured committees',
         error: error.message,
       });
     }

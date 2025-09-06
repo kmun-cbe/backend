@@ -11,6 +11,8 @@ const committeeValidation = [
   body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Committee name is required'),
   body('description').trim().isLength({ min: 20 }).withMessage('Description is required'),
   body('capacity').isInt({ min: 1 }).withMessage('Valid capacity is required'),
+  body('type').trim().isLength({ min: 1 }).withMessage('Committee type is required'),
+  body('institutionType').trim().isIn(['school', 'college', 'both']).withMessage('Valid institution type is required'),
 ];
 
 // Portfolio validation
@@ -22,6 +24,7 @@ const portfolioValidation = [
 
 // Committee Routes
 router.get('/', committeeController.getCommittees);
+router.get('/featured', committeeController.getFeaturedCommittees);
 router.get('/institution/:institutionType', committeeController.getCommitteesByInstitutionType);
 router.get('/:id', committeeController.getCommitteeById);
 router.get('/stats', committeeController.getCommitteeStats);

@@ -61,7 +61,7 @@ class EmailService {
     }
   }
 
-  async sendTemplateEmail(templateName, to, variables = {}) {
+  async sendTemplateEmail(templateName, to, variables = {}, provider = 'gmail') {
     try {
       const template = await prisma.emailTemplate.findUnique({
         where: { name: templateName, isActive: true },
@@ -72,8 +72,8 @@ class EmailService {
       }
 
       let subject = template.subject;
-      let htmlContent = template.htmlContent;
-      let textContent = template.textContent;
+      let htmlContent = template.body;
+      let textContent = template.body;
 
       // Replace variables in template
       Object.keys(variables).forEach(key => {
@@ -90,6 +90,7 @@ class EmailService {
         subject,
         html: htmlContent,
         text: textContent,
+        provider,
       });
     } catch (error) {
       console.error('Template email sending failed:', error);
@@ -97,13 +98,17 @@ class EmailService {
     }
   }
 
-  async sendRegistrationConfirmation(userEmail, userData) {
+  async sendRegistrationConfirmation(userEmail, userData, provider = 'gmail') {
     return await this.sendTemplateEmail('registration_confirmation', userEmail, {
       firstName: userData.firstName,
       lastName: userData.lastName,
       registrationId: userData.registrationId,
       paymentAmount: userData.paymentAmount,
-    });
+      institution: userData.institution,
+      committeePreference1: userData.committeePreference1,
+      committeePreference2: userData.committeePreference2,
+      committeePreference3: userData.committeePreference3,
+    }, provider);
   }
 
   async sendPaymentConfirmation(userEmail, paymentData) {
@@ -123,6 +128,16 @@ class EmailService {
       committee: allocationData.committee,
       portfolio: allocationData.portfolio,
     });
+  }
+
+  async sendWelcomeEmail(userEmail, userData, provider = 'gmail') {
+    return await this.sendTemplateEmail('welcome_email', userEmail, {
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      email: userData.email,
+      password: userData.password,
+      role: userData.role,
+    }, provider);
   }
 
   async sendBulkEmail(recipients, subject, content, provider = 'gmail', targetAudience = 'ALL') {

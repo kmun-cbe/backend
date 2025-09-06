@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -15,7 +14,7 @@ model User {
   firstName         String
   lastName          String
   phone             String?
-  role              UserRole  @default(DELEGATE)
+  role              String    @default("DELEGATE")
   isActive          Boolean   @default(true)
   lastLogin         DateTime?
   createdAt         DateTime  @default(now())
@@ -49,7 +48,7 @@ model Committee {
   name            String   @unique
   description     String?
   type            String   // GA, SC, etc.
-  institutionType String   // school or college
+  institutionType String   // school, college, or both
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -116,8 +115,8 @@ model Registration {
   userId      String
   committeeId String
   portfolioId String?
-  status      RegistrationStatus @default(PENDING)
-  paymentStatus PaymentStatus   @default(PENDING)
+  status      String @default("PENDING")
+  paymentStatus String   @default("PENDING")
   amount      Float
   allocatedCommittee String?
   allocatedPortfolio String?
@@ -169,7 +168,7 @@ model AttendanceRecord {
   id        String   @id @default(cuid())
   userId    String
   sessionId String
-  status    AttendanceStatus @default(ABSENT)
+  status    String @default("ABSENT")
   markedAt  DateTime @default(now())
   notes     String?
   
@@ -200,6 +199,7 @@ model Contact {
   id          String   @id @default(cuid())
   name        String
   email       String
+  phone       String?
   subject     String
   message     String
   status      String   @default("pending") // pending, resolved, archived
@@ -237,7 +237,7 @@ model Payment {
   amount          Float
   currency        String        @default("INR")
   paymentMethod   String        @default("razorpay")
-  status          PaymentStatus @default(PENDING)
+  status          String @default("PENDING")
   transactionId   String?
   paymentLink     String?
   paidAt          DateTime?
@@ -254,7 +254,7 @@ model EmailTemplate {
   name      String   @unique
   subject   String
   body      String
-  variables String[] // Array of variable names used in template
+  variables String // JSON string of variable names used in template
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -262,37 +262,16 @@ model EmailTemplate {
   @@map("email_templates")
 }
 
-enum UserRole {
-  DELEGATE
-  COMMITTEE_DIRECTOR
-  DELEGATE_AFFAIRS
-  HOSPITALITY_ADMIN
-  FRONT_DESK_ADMIN
-  DEV_ADMIN
-  SOFTWARE_ADMIN
-  REGISTRATION_ADMIN
-  ALLOCATION_ADMIN
-  EXECUTIVE_BOARD
-  PARTICIPANT
-}
+// UserRole enum replaced with String for SQLite compatibility
+// Valid values: DELEGATE, COMMITTEE_DIRECTOR, DELEGATE_AFFAIRS, HOSPITALITY_ADMIN, 
+// FRONT_DESK_ADMIN, DEV_ADMIN, SOFTWARE_ADMIN, REGISTRATION_ADMIN, 
+// ALLOCATION_ADMIN, EXECUTIVE_BOARD, PARTICIPANT
 
-enum RegistrationStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  WAITLISTED
-}
+// RegistrationStatus enum replaced with String for SQLite compatibility
+// Valid values: PENDING, APPROVED, REJECTED, WAITLISTED
 
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
+// PaymentStatus enum replaced with String for SQLite compatibility
+// Valid values: PENDING, COMPLETED, FAILED, REFUNDED
 
-enum AttendanceStatus {
-  PRESENT
-  ABSENT
-  LATE
-  EXCUSED
-}
+// AttendanceStatus enum replaced with String for SQLite compatibility
+// Valid values: PRESENT, ABSENT, LATE, EXCUSED

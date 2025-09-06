@@ -24,8 +24,7 @@ class ContactController {
           phone: phone || null,
           subject,
           message,
-          status: 'pending',
-          submittedAt: new Date()
+          status: 'pending'
         }
       });
 
@@ -70,7 +69,7 @@ class ContactController {
     try {
       const { id } = req.params;
       const contact = await prisma.contact.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: id }
       });
 
       if (!contact) {
@@ -100,11 +99,11 @@ class ContactController {
       const { status, notes } = req.body;
 
       const contact = await prisma.contact.update({
-        where: { id: parseInt(id) },
+        where: { id: id },
         data: {
           status: status || undefined,
           notes: notes || undefined,
-          updatedAt: new Date()
+          resolvedAt: status === 'resolved' ? new Date() : undefined
         }
       });
 
@@ -127,7 +126,7 @@ class ContactController {
     try {
       const { id } = req.params;
       await prisma.contact.delete({
-        where: { id: parseInt(id) }
+        where: { id: id }
       });
 
       res.json({

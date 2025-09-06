@@ -103,14 +103,14 @@ async function main() {
       name: 'United Nations Security Council (UNSC)',
       description: 'Addressing global security challenges and international peace. Delegates will debate on critical security issues affecting global stability.',
       type: 'SC',
-      institutionType: 'college',
+      institutionType: 'both',
       isActive: true
     },
     {
       name: 'United Nations General Assembly (UNGA)',
       description: 'Deliberating on international cooperation and development. The main deliberative body of the United Nations.',
       type: 'GA',
-      institutionType: 'college',
+      institutionType: 'both',
       isActive: true
     },
     {

@@ -9,19 +9,18 @@ const router = express.Router();
 
 // Registration validation
 const registrationValidation = [
-  body('firstName').trim().isLength({ min: 2, max: 50 }).withMessage('First name is required'),
-  body('lastName').trim().isLength({ min: 2, max: 50 }).withMessage('Last name is required'),
+  body('fullName').trim().isLength({ min: 2, max: 100 }).withMessage('Full name is required'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('phone').notEmpty().withMessage('Phone number is required'),
   body('gender').isIn(['MALE', 'FEMALE', 'OTHER']).withMessage('Valid gender is required'),
   body('isKumaraguru').isIn(['yes', 'no']).withMessage('Kumaraguru institution status is required'),
   body('totalMuns').notEmpty().withMessage('Total MUNs attended is required'),
   body('committeePreference1').notEmpty().withMessage('Committee preference 1 is required'),
-  body('portfolioPreference1').notEmpty().withMessage('Portfolio preference 1 is required'),
+  body('portfolioPreference1_1').notEmpty().withMessage('Portfolio preference 1 is required'),
   body('committeePreference2').notEmpty().withMessage('Committee preference 2 is required'),
-  body('portfolioPreference2').notEmpty().withMessage('Portfolio preference 2 is required'),
+  body('portfolioPreference2_1').notEmpty().withMessage('Portfolio preference 2 is required'),
   body('committeePreference3').notEmpty().withMessage('Committee preference 3 is required'),
-  body('portfolioPreference3').notEmpty().withMessage('Portfolio preference 3 is required'),
+  body('portfolioPreference3_1').notEmpty().withMessage('Portfolio preference 3 is required'),
 ];
 
 // File upload middleware

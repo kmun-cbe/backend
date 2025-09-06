@@ -24,11 +24,17 @@ class RegistrationController {
         totalMuns,
         requiresAccommodation,
         committeePreference1,
-        portfolioPreference1,
+        portfolioPreference1_1,
+        portfolioPreference1_2,
+        portfolioPreference1_3,
         committeePreference2,
-        portfolioPreference2,
+        portfolioPreference2_1,
+        portfolioPreference2_2,
+        portfolioPreference2_3,
         committeePreference3,
-        portfolioPreference3,
+        portfolioPreference3_1,
+        portfolioPreference3_2,
+        portfolioPreference3_3,
       } = req.body;
 
       // Split fullName into firstName and lastName
@@ -78,23 +84,27 @@ class RegistrationController {
           totalMuns: parseInt(totalMuns) || 0,
           requiresAccommodation: requiresAccommodation === 'yes',
           committeePreference1,
-          portfolioPreference1,
+          portfolioPreference1: portfolioPreference1_1,
           committeePreference2,
-          portfolioPreference2,
+          portfolioPreference2: portfolioPreference2_1,
           committeePreference3,
-          portfolioPreference3,
+          portfolioPreference3: portfolioPreference3_1,
           idDocument: req.files.idDocument[0].path,
           munResume: req.files.munResume ? req.files.munResume[0].path : null,
         },
       });
 
-      // Send registration confirmation email
+      // Send registration confirmation email using Outlook SMTP
       await emailService.sendRegistrationConfirmation(email, {
         firstName,
         lastName,
         registrationId: registration.id,
         paymentAmount: 150, // Base registration fee
-      });
+        institution: institution || 'N/A',
+        committeePreference1,
+        committeePreference2,
+        committeePreference3,
+      }, 'outlook');
 
       res.status(201).json({
         success: true,
@@ -167,7 +177,7 @@ class RegistrationController {
             [sortBy]: sortOrder,
           },
         }),
-        prisma.registration.count({ where }),
+        prisma.registrationForm.count({ where }),
       ]);
 
       res.json({
