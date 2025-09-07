@@ -162,7 +162,7 @@ class PaymentController {
                 firstName: true,
                 lastName: true,
                 email: true,
-                institution: true
+                school: true
               }
             }
           },
@@ -208,7 +208,7 @@ class PaymentController {
               firstName: true,
               lastName: true,
               email: true,
-              institution: true,
+              school: true,
               phone: true
             }
           }
@@ -334,20 +334,16 @@ class PaymentController {
 
   async getTransactionLogs(req, res) {
     try {
-      const { page = 1, limit = 20, action, userId } = req.query;
+      const { page = 1, limit = 20, status, userId } = req.query;
       const skip = (page - 1) * limit;
 
-      const whereClause = {
-        action: {
-          in: ['CREATE_PAYMENT_ORDER', 'PAYMENT_VERIFIED', 'PAYMENT_VERIFICATION_FAILED', 'PAYMENT_REFUNDED']
-        }
-      };
-
-      if (action) whereClause.action = action;
+      const whereClause = {};
+      
+      if (status) whereClause.status = status;
       if (userId) whereClause.userId = userId;
 
       const [logs, total] = await Promise.all([
-        prisma.activityLog.findMany({
+        prisma.payment.findMany({
           where: whereClause,
           include: {
             user: {
@@ -357,13 +353,23 @@ class PaymentController {
                 lastName: true,
                 email: true
               }
+            },
+            registration: {
+              select: {
+                id: true,
+                committee: {
+                  select: {
+                    name: true
+                  }
+                }
+              }
             }
           },
           orderBy: { createdAt: 'desc' },
           skip: parseInt(skip),
           take: parseInt(limit)
         }),
-        prisma.activityLog.count({ where: whereClause })
+        prisma.payment.count({ where: whereClause })
       ]);
 
       res.json({

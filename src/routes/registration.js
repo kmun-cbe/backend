@@ -41,35 +41,35 @@ router.post(
 router.get(
   '/',
   authenticateToken,
-  authorizeRoles('SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),
+  authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),
   registrationController.getRegistrations
 );
 
 router.get(
   '/stats',
   authenticateToken,
-  authorizeRoles('SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),
+  authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),
   registrationController.getRegistrationStats
 );
 
 router.get(
   '/:id',
   authenticateToken,
-  authorizeRoles('SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),
+  authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),
   registrationController.getRegistrationById
 );
 
 router.put(
   '/:id',
   authenticateToken,
-  authorizeRoles('SOFTWARE_ADMIN', 'SUPER_ADMIN', 'ALLOCATION_ADMIN'),
+  authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'SUPER_ADMIN', 'ALLOCATION_ADMIN'),
   registrationController.updateRegistrationStatus
 );
 
 router.delete(
   '/:id',
   authenticateToken,
-  authorizeRoles('SOFTWARE_ADMIN', 'SUPER_ADMIN'),
+  authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'SUPER_ADMIN'),
   registrationController.deleteRegistration
 );
 

@@ -126,7 +126,7 @@ class FileUploadService {
   }
 
   getFileUrl(filePath) {
-    return `${process.env.VITE_API_URL}/${filePath}`;
+    return `${process.env.VITE_API_URL}/api/${filePath}`;
   }
 
   validateFile(file, allowedTypes = [], maxSize = 10 * 1024 * 1024) {

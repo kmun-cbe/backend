@@ -128,7 +128,7 @@ class AuthController {
   async getProfile(req, res) {
     try {
       const user = await prisma.user.findUnique({
-        where: { id: req.user.userId },
+        where: { id: req.user.id },
         include: {
           registrations: true,
         },
@@ -174,7 +174,7 @@ class AuthController {
       }
 
       const updatedUser = await prisma.user.update({
-        where: { id: req.user.userId },
+        where: { id: req.user.id },
         data: {
           firstName,
           lastName,
@@ -229,7 +229,7 @@ class AuthController {
 
       // Update password
       await prisma.user.update({
-        where: { id: req.user.userId },
+        where: { id: req.user.id },
         data: { password: hashedNewPassword }
       });
 

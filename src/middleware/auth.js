@@ -29,7 +29,7 @@ export const authenticateToken = async (req, res, next) => {
     }
 
     req.user = {
-      userId: user.id,
+      id: user.id,
       email: user.email,
       role: user.role,
       firstName: user.firstName,
@@ -79,7 +79,7 @@ export const optionalAuth = async (req, res, next) => {
 
       if (user && user.isActive) {
         req.user = {
-          userId: user.id,
+          id: user.id,
           email: user.email,
           role: user.role,
           firstName: user.firstName,

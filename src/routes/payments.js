@@ -1,6 +1,6 @@
 import express from 'express';
 import paymentController from '../controllers/paymentController.js';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import { 
   validatePaymentOrderRequest, 
   validatePaymentVerificationRequest, 
@@ -25,16 +25,16 @@ router.post('/verify',
 );
 
 // Get all payments (with pagination and filters)
-router.get('/', paymentController.getAllPayments);
+router.get('/', authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'FRONT_DESK_ADMIN'), paymentController.getAllPayments);
 
 // Get payment statistics
-router.get('/stats', paymentController.getPaymentStats);
+router.get('/stats', authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'), paymentController.getPaymentStats);
 
 // Get transaction logs
-router.get('/logs', paymentController.getTransactionLogs);
+router.get('/logs', authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'), paymentController.getTransactionLogs);
 
 // Get payment by ID
-router.get('/:id', paymentController.getPaymentById);
+router.get('/:id', authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'FRONT_DESK_ADMIN'), paymentController.getPaymentById);
 
 // Refund payment
 router.post('/:id/refund',

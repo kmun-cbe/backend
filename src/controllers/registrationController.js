@@ -139,11 +139,14 @@ class RegistrationController {
         paymentStatus,
         search,
         sortBy = 'submittedAt',
-        sortOrder = 'DESC',
+        sortOrder = 'desc',
       } = req.query;
 
       const offset = (page - 1) * limit;
       const where = {};
+
+      // Normalize sort order to lowercase (Prisma expects 'asc' or 'desc')
+      const normalizedSortOrder = sortOrder.toLowerCase() === 'asc' ? 'asc' : 'desc';
 
       // Apply filters
       if (status) where.status = status;
@@ -174,7 +177,7 @@ class RegistrationController {
           skip: offset,
           take: parseInt(limit),
           orderBy: {
-            [sortBy]: sortOrder,
+            [sortBy]: normalizedSortOrder,
           },
         }),
         prisma.registrationForm.count({ where }),

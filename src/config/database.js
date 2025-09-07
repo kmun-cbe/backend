@@ -20,7 +20,7 @@ export const connectDatabase = async () => {
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
-    console.log('💡 Using SQLite fallback database');
+    console.log('💡 Database connection failed - check your PostgreSQL configuration');
     return false;
   }
 };
