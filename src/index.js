@@ -114,15 +114,15 @@ app.use(errorHandler);
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n🔄 Shutting down gracefully...');
-  await disconnectDatabase();
-  process.exit(0);
+  console.log('\n🔄 Skipping shutdown...');
+  // await disconnectDatabase();
+  // process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  console.log('\n🔄 Shutting down gracefully...');
-  await disconnectDatabase();
-  process.exit(0);
+  console.log('\n🔄 Skipping shutdown...');
+  // await disconnectDatabase();
+  // process.exit(0);
 });
 
 // Start server
