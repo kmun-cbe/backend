@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import fileUploadService from '../services/fileUploadService.js';
 import emailService from '../services/emailService.js';
 import paymentService from '../services/paymentService.js';
+import userIdService from '../services/userIdService.js';
 
 class RegistrationController {
   async createRegistration(req, res) {
@@ -49,12 +50,17 @@ class RegistrationController {
         });
       }
 
+      // Generate custom user ID
+      const customUserId = await userIdService.generateUserId();
+      console.log('Generated custom user ID:', customUserId);
+
       // Create user account first
       const userPassword = `Iam${firstName}1!@#`;
       const hashedPassword = await bcrypt.hash(userPassword, 12);
 
       const user = await prisma.user.create({
         data: {
+          userId: customUserId,
           firstName,
           lastName,
           email,
@@ -122,6 +128,7 @@ class RegistrationController {
         },
         user: {
           id: user.id,
+          userId: user.userId,
           email: user.email,
           tempPassword: userPassword,
         },

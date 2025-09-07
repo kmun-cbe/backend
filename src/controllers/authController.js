@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/database.js';
+import userIdService from '../services/userIdService.js';
 
 
 
@@ -18,12 +19,16 @@ class AuthController {
         });
       }
 
+      // Generate custom user ID
+      const customUserId = await userIdService.generateUserId();
+
       // Hash password
       const hashedPassword = await bcrypt.hash(password, 12);
 
       // Create user
       const user = await prisma.user.create({
         data: {
+          userId: customUserId,
           firstName,
           lastName,
           email,

@@ -1,10 +1,24 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import userIdService from '../src/services/userIdService.js';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seeding...');
+
+  // Check existing users and log their custom user IDs
+  console.log('🆔 Checking existing users...');
+  const allExistingUsers = await prisma.user.findMany({
+    orderBy: { createdAt: 'asc' }
+  });
+
+  if (allExistingUsers.length > 0) {
+    console.log(`Found ${allExistingUsers.length} existing users with custom user IDs:`);
+    for (const user of allExistingUsers) {
+      console.log(`  - ${user.email}: ${user.userId}`);
+    }
+  }
 
   // Create default admin users
   const hashedPassword = await bcrypt.hash('kmun2025', 12);
@@ -78,7 +92,7 @@ async function main() {
     }
   ];
 
-  console.log('👥 Creating users...');
+  console.log('👥 Creating/updating users with custom user IDs...');
   const createdUsers = [];
   for (const userData of users) {
     const existingUser = await prisma.user.findFirst({
@@ -86,14 +100,20 @@ async function main() {
     });
 
     if (!existingUser) {
+      // Generate custom user ID for new user (KMUN25XXX format)
+      const customUserId = await userIdService.generateUserId();
+      
       const user = await prisma.user.create({
-        data: userData
+        data: {
+          ...userData,
+          userId: customUserId
+        }
       });
       createdUsers.push(user);
-      console.log(`✅ Created user: ${userData.email}`);
+      console.log(`✅ Created user: ${userData.email} with User ID: ${customUserId}`);
     } else {
       createdUsers.push(existingUser);
-      console.log(`⏭️  User already exists: ${userData.email}`);
+      console.log(`⏭️  User already exists: ${userData.email} (User ID: ${existingUser.userId})`);
     }
   }
 

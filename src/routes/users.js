@@ -3,6 +3,7 @@ import { prisma } from '../config/database.js';
 import bcrypt from 'bcryptjs';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import emailService from '../services/emailService.js';
+import userIdService from '../services/userIdService.js';
 
 const router = express.Router();
 
@@ -68,12 +69,16 @@ router.post('/', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'
       });
     }
 
+    // Generate custom user ID
+    const customUserId = await userIdService.generateUserId();
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
     const user = await prisma.user.create({
       data: {
+        userId: customUserId,
         firstName,
         lastName,
         email,
@@ -86,6 +91,7 @@ router.post('/', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'
       },
       select: {
         id: true,
+        userId: true,
         firstName: true,
         lastName: true,
         email: true,
