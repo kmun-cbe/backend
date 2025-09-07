@@ -3,6 +3,7 @@ import { body } from 'express-validator';
 import committeeController from '../controllers/committeeController.js';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import { validateRequest } from '../middleware/validation.js';
+import fileUploadService from '../services/fileUploadService.js';
 
 const router = express.Router();
 
@@ -20,6 +21,14 @@ const portfolioValidation = [
   body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Portfolio name is required'),
 ];
 
+// File upload middleware for committee logo
+const committeeUploadMiddleware = fileUploadService.createUploadMiddleware({
+  destination: 'uploads/committee-logos',
+  allowedTypes: ['image'],
+  maxSize: 5 * 1024 * 1024, // 5MB
+  maxFiles: 1,
+}).single('logo');
+
 // Committee Routes
 router.get('/', committeeController.getCommittees);
 router.get('/featured', committeeController.getFeaturedCommittees);
@@ -31,6 +40,7 @@ router.post(
   '/',
   authenticateToken,
   authorizeRoles('DEV_ADMIN'),
+  committeeUploadMiddleware,
   committeeValidation,
   validateRequest,
   committeeController.createCommittee
@@ -40,6 +50,7 @@ router.put(
   '/:id',
   authenticateToken,
   authorizeRoles('DEV_ADMIN'),
+  committeeUploadMiddleware,
   committeeValidation,
   validateRequest,
   committeeController.updateCommittee

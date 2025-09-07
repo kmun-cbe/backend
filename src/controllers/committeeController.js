@@ -59,7 +59,10 @@ class CommitteeController {
 
   async createCommittee(req, res) {
     try {
-      const { name, description, type, institutionType, capacity, logo } = req.body;
+      const { name, description, type, institutionType, capacity } = req.body;
+      
+      // Handle uploaded logo file
+      const logoPath = req.file ? `/uploads/committee-logos/${req.file.filename}` : null;
 
       // Check if committee with same name already exists
       const existingCommittee = await prisma.committee.findUnique({
@@ -80,7 +83,7 @@ class CommitteeController {
           type: type || 'GENERAL', // Default type if not provided
           institutionType,
           capacity: parseInt(capacity) || 0,
-          logo,
+          logo: logoPath,
         },
         include: {
           portfolios: true,
@@ -105,18 +108,27 @@ class CommitteeController {
   async updateCommittee(req, res) {
     try {
       const { id } = req.params;
-      const { name, description, type, institutionType, capacity, logo } = req.body;
+      const { name, description, type, institutionType, capacity } = req.body;
+      
+      // Handle uploaded logo file - only update if new file is uploaded
+      const logoPath = req.file ? `/uploads/committee-logos/${req.file.filename}` : undefined;
+
+      const updateData = {
+        name,
+        description,
+        type: type || 'GENERAL', // Default type if not provided
+        institutionType,
+        capacity: parseInt(capacity) || 0,
+      };
+
+      // Only include logo in update if a new file was uploaded
+      if (logoPath) {
+        updateData.logo = logoPath;
+      }
 
       const committee = await prisma.committee.update({
         where: { id },
-        data: {
-          name,
-          description,
-          type: type || 'GENERAL', // Default type if not provided
-          institutionType,
-          capacity: parseInt(capacity) || 0,
-          logo,
-        },
+        data: updateData,
         include: {
           portfolios: true,
         },
@@ -167,6 +179,9 @@ class CommitteeController {
 
       const committee = await prisma.committee.findUnique({
         where: { id: committeeId },
+        include: {
+          portfolios: true,
+        },
       });
 
       if (!committee) {
@@ -176,11 +191,9 @@ class CommitteeController {
         });
       }
 
-      const portfolios = JSON.parse(committee.portfolios || '[]');
-
       res.json({
         success: true,
-        data: portfolios,
+        data: committee.portfolios,
       });
     } catch (error) {
       console.error('Get portfolios error:', error);
@@ -217,7 +230,7 @@ class CommitteeController {
 
       // Update committee capacity (count of portfolios)
       const portfolioCount = await prisma.portfolio.count({
-        where: { committeeId, isActive: true },
+        where: { committeeId },
       });
 
       await prisma.committee.update({
@@ -297,14 +310,14 @@ class CommitteeController {
         });
       }
 
-      await prisma.portfolio.update({
+      // Hard delete - actually remove the portfolio from database
+      await prisma.portfolio.delete({
         where: { id: portfolioId },
-        data: { isActive: false },
       });
 
-      // Update committee capacity (count of active portfolios)
+      // Update committee capacity (count of remaining portfolios)
       const portfolioCount = await prisma.portfolio.count({
-        where: { committeeId, isActive: true },
+        where: { committeeId },
       });
 
       await prisma.committee.update({
