@@ -9,17 +9,15 @@ const router = express.Router();
 // Committee validation
 const committeeValidation = [
   body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Committee name is required'),
-  body('description').trim().isLength({ min: 20 }).withMessage('Description is required'),
-  body('capacity').isInt({ min: 1 }).withMessage('Valid capacity is required'),
-  body('type').trim().isLength({ min: 1 }).withMessage('Committee type is required'),
+  body('description').optional().trim().isLength({ min: 1 }).withMessage('Description must not be empty'),
+  body('type').optional().trim().isLength({ min: 1 }).withMessage('Committee type must not be empty if provided'),
   body('institutionType').trim().isIn(['school', 'college', 'both']).withMessage('Valid institution type is required'),
+  body('capacity').optional().isInt({ min: 0 }).withMessage('Capacity must be a non-negative integer'),
 ];
 
 // Portfolio validation
 const portfolioValidation = [
   body('name').trim().isLength({ min: 3, max: 100 }).withMessage('Portfolio name is required'),
-  body('description').trim().isLength({ min: 10 }).withMessage('Description is required'),
-  body('capacity').isInt({ min: 1 }).withMessage('Valid capacity is required'),
 ];
 
 // Committee Routes

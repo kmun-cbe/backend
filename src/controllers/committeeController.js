@@ -7,20 +7,15 @@ class CommitteeController {
     try {
       const committees = await prisma.committee.findMany({
         where: { isActive: true },
+        include: {
+          portfolios: true,
+        },
         orderBy: { createdAt: 'asc' },
       });
 
-      // Parse JSON fields
-      const parsedCommittees = committees.map(committee => ({
-        ...committee,
-        topics: JSON.parse(committee.topics || '[]'),
-        chairs: JSON.parse(committee.chairs || '[]'),
-        portfolios: JSON.parse(committee.portfolios || '[]'),
-      }));
-
       res.json({
         success: true,
-        data: parsedCommittees,
+        data: committees,
       });
     } catch (error) {
       console.error('Get committees error:', error);
@@ -38,6 +33,9 @@ class CommitteeController {
 
       const committee = await prisma.committee.findUnique({
         where: { id },
+        include: {
+          portfolios: true,
+        },
       });
 
       if (!committee) {
@@ -47,17 +45,9 @@ class CommitteeController {
         });
       }
 
-      // Parse JSON fields
-      const parsedCommittee = {
-        ...committee,
-        topics: JSON.parse(committee.topics || '[]'),
-        chairs: JSON.parse(committee.chairs || '[]'),
-        portfolios: JSON.parse(committee.portfolios || '[]'),
-      };
-
       res.json({
         success: true,
-        data: parsedCommittee,
+        data: committee,
       });
     } catch (error) {
       console.error('Get committee error:', error);
@@ -71,33 +61,38 @@ class CommitteeController {
 
   async createCommittee(req, res) {
     try {
-      const { name, description, capacity, topics = [], chairs = [], portfolios = [], image, institutionType } = req.body;
+      const { name, description, type, institutionType, capacity, logo } = req.body;
+
+      // Check if committee with same name already exists
+      const existingCommittee = await prisma.committee.findUnique({
+        where: { name },
+      });
+
+      if (existingCommittee) {
+        return res.status(400).json({
+          success: false,
+          message: 'Committee with this name already exists',
+        });
+      }
 
       const committee = await prisma.committee.create({
         data: {
           name,
           description,
-          capacity: parseInt(capacity) || 0,
-          topics: JSON.stringify(topics),
-          chairs: JSON.stringify(chairs),
-          portfolios: JSON.stringify(portfolios),
-          image,
+          type: type || 'GENERAL', // Default type if not provided
           institutionType,
+          capacity: parseInt(capacity) || 0,
+          logo,
+        },
+        include: {
+          portfolios: true,
         },
       });
-
-      // Parse JSON fields for response
-      const parsedCommittee = {
-        ...committee,
-        topics: JSON.parse(committee.topics || '[]'),
-        chairs: JSON.parse(committee.chairs || '[]'),
-        portfolios: JSON.parse(committee.portfolios || '[]'),
-      };
 
       res.status(201).json({
         success: true,
         message: 'Committee created successfully',
-        data: parsedCommittee,
+        data: committee,
       });
     } catch (error) {
       console.error('Create committee error:', error);
@@ -112,34 +107,27 @@ class CommitteeController {
   async updateCommittee(req, res) {
     try {
       const { id } = req.params;
-      const { name, description, capacity, topics = [], chairs = [], portfolios = [], image, institutionType } = req.body;
+      const { name, description, type, institutionType, capacity, logo } = req.body;
 
       const committee = await prisma.committee.update({
         where: { id },
         data: {
           name,
           description,
-          capacity: parseInt(capacity) || 0,
-          topics: JSON.stringify(topics),
-          chairs: JSON.stringify(chairs),
-          portfolios: JSON.stringify(portfolios),
-          image,
+          type: type || 'GENERAL', // Default type if not provided
           institutionType,
+          capacity: parseInt(capacity) || 0,
+          logo,
+        },
+        include: {
+          portfolios: true,
         },
       });
-
-      // Parse JSON fields for response
-      const parsedCommittee = {
-        ...committee,
-        topics: JSON.parse(committee.topics || '[]'),
-        chairs: JSON.parse(committee.chairs || '[]'),
-        portfolios: JSON.parse(committee.portfolios || '[]'),
-      };
 
       res.json({
         success: true,
         message: 'Committee updated successfully',
-        data: parsedCommittee,
+        data: committee,
       });
     } catch (error) {
       console.error('Update committee error:', error);
@@ -209,7 +197,7 @@ class CommitteeController {
   async addPortfolio(req, res) {
     try {
       const { committeeId } = req.params;
-      const { name, description, capacity } = req.body;
+      const { name } = req.body;
 
       const committee = await prisma.committee.findUnique({
         where: { id: committeeId },
@@ -222,28 +210,27 @@ class CommitteeController {
         });
       }
 
-      const portfolios = JSON.parse(committee.portfolios || '[]');
-      const newPortfolio = {
-        id: Date.now().toString(),
-        name,
-        description,
-        capacity: parseInt(capacity) || 0,
-        registered: 0,
-      };
+      const portfolio = await prisma.portfolio.create({
+        data: {
+          name,
+          committeeId,
+        },
+      });
 
-      portfolios.push(newPortfolio);
+      // Update committee capacity (count of portfolios)
+      const portfolioCount = await prisma.portfolio.count({
+        where: { committeeId, isActive: true },
+      });
 
       await prisma.committee.update({
         where: { id: committeeId },
-        data: {
-          portfolios: JSON.stringify(portfolios),
-        },
+        data: { capacity: portfolioCount },
       });
 
       res.json({
         success: true,
         message: 'Portfolio added successfully',
-        data: newPortfolio,
+        data: portfolio,
       });
     } catch (error) {
       console.error('Add portfolio error:', error);
@@ -258,47 +245,31 @@ class CommitteeController {
   async updatePortfolio(req, res) {
     try {
       const { committeeId, portfolioId } = req.params;
-      const { name, description, capacity } = req.body;
+      const { name } = req.body;
 
-      const committee = await prisma.committee.findUnique({
-        where: { id: committeeId },
+      const portfolio = await prisma.portfolio.findFirst({
+        where: { 
+          id: portfolioId,
+          committeeId: committeeId,
+        },
       });
 
-      if (!committee) {
-        return res.status(404).json({
-          success: false,
-          message: 'Committee not found',
-        });
-      }
-
-      const portfolios = JSON.parse(committee.portfolios || '[]');
-      const portfolioIndex = portfolios.findIndex(p => p.id === portfolioId);
-
-      if (portfolioIndex === -1) {
+      if (!portfolio) {
         return res.status(404).json({
           success: false,
           message: 'Portfolio not found',
         });
       }
 
-      portfolios[portfolioIndex] = {
-        ...portfolios[portfolioIndex],
-        name,
-        description,
-        capacity: parseInt(capacity) || 0,
-      };
-
-      await prisma.committee.update({
-        where: { id: committeeId },
-        data: {
-          portfolios: JSON.stringify(portfolios),
-        },
+      const updatedPortfolio = await prisma.portfolio.update({
+        where: { id: portfolioId },
+        data: { name },
       });
 
       res.json({
         success: true,
         message: 'Portfolio updated successfully',
-        data: portfolios[portfolioIndex],
+        data: updatedPortfolio,
       });
     } catch (error) {
       console.error('Update portfolio error:', error);
@@ -314,25 +285,33 @@ class CommitteeController {
     try {
       const { committeeId, portfolioId } = req.params;
 
-      const committee = await prisma.committee.findUnique({
-        where: { id: committeeId },
+      const portfolio = await prisma.portfolio.findFirst({
+        where: { 
+          id: portfolioId,
+          committeeId: committeeId,
+        },
       });
 
-      if (!committee) {
+      if (!portfolio) {
         return res.status(404).json({
           success: false,
-          message: 'Committee not found',
+          message: 'Portfolio not found',
         });
       }
 
-      const portfolios = JSON.parse(committee.portfolios || '[]');
-      const filteredPortfolios = portfolios.filter(p => p.id !== portfolioId);
+      await prisma.portfolio.update({
+        where: { id: portfolioId },
+        data: { isActive: false },
+      });
+
+      // Update committee capacity (count of active portfolios)
+      const portfolioCount = await prisma.portfolio.count({
+        where: { committeeId, isActive: true },
+      });
 
       await prisma.committee.update({
         where: { id: committeeId },
-        data: {
-          portfolios: JSON.stringify(filteredPortfolios),
-        },
+        data: { capacity: portfolioCount },
       });
 
       res.json({
@@ -402,9 +381,9 @@ class CommitteeController {
       // Parse JSON fields
       const parsedCommittees = committees.map(committee => ({
         ...committee,
-        topics: JSON.parse(committee.topics || '[]'),
-        chairs: JSON.parse(committee.chairs || '[]'),
-        portfolios: JSON.parse(committee.portfolios || '[]'),
+        topics: committee.topics ? JSON.parse(committee.topics) : [],
+        chairs: committee.chairs ? JSON.parse(committee.chairs) : [],
+        portfolios: committee.portfolios ? JSON.parse(committee.portfolios) : [],
       }));
 
       res.json({
@@ -426,21 +405,16 @@ class CommitteeController {
     try {
       const committees = await prisma.committee.findMany({
         where: { isActive: true },
+        include: {
+          portfolios: true,
+        },
         orderBy: { createdAt: 'asc' },
         take: 2,
       });
 
-      // Parse JSON fields
-      const parsedCommittees = committees.map(committee => ({
-        ...committee,
-        topics: JSON.parse(committee.topics || '[]'),
-        chairs: JSON.parse(committee.chairs || '[]'),
-        portfolios: JSON.parse(committee.portfolios || '[]'),
-      }));
-
       res.json({
         success: true,
-        data: parsedCommittees,
+        data: committees,
       });
     } catch (error) {
       console.error('Get featured committees error:', error);

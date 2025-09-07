@@ -27,6 +27,7 @@ import activityLogRoutes from './routes/activityLogs.js';
 import dashboardRoutes from './routes/dashboard.js';
 import healthRoutes from './routes/health.js';
 import mailerRoutes from './routes/mailer.js';
+import galleryRoutes from './routes/gallery.js';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
@@ -65,6 +66,7 @@ app.use('/api/activity-logs', activityLogRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/health', healthRoutes);
 app.use('/api/mailer', mailerRoutes);
+app.use('/api/gallery', galleryRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

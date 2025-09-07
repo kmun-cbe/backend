@@ -52,6 +52,8 @@ model Committee {
   description     String?
   type            String   // GA, SC, etc.
   institutionType String   // school, college, or both
+  capacity        Int      @default(0) // Number of portfolios under this committee
+  logo            String?  // Logo file path
   isActive        Boolean  @default(true)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -66,7 +68,6 @@ model Committee {
 model Portfolio {
   id          String   @id @default(cuid())
   name        String
-  description String?
   committeeId String
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -283,3 +284,17 @@ model EmailTemplate {
 
 // AttendanceStatus enum replaced with String for SQLite compatibility
 // Valid values: PRESENT, ABSENT, LATE, EXCUSED
+
+model GalleryItem {
+  id          String   @id @default(cuid())
+  title       String
+  type        String   // 'image' or 'video'
+  imageUrl    String   // For images: direct image URL, For videos: thumbnail URL
+  videoUrl    String?  // For videos: video URL (YouTube, Vimeo, etc.)
+  category    String   // 'portraits', 'highlights', 'events', etc.
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("gallery_items")
+}
