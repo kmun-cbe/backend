@@ -1,5 +1,6 @@
 import { prisma } from '../config/database.js';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import fileUploadService from '../services/fileUploadService.js';
 import emailService from '../services/emailService.js';
 import paymentService from '../services/paymentService.js';
@@ -92,6 +93,13 @@ class RegistrationController {
         },
       });
 
+      // Generate JWT token for immediate authentication
+      const token = jwt.sign(
+        { userId: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
       // Send registration confirmation email using Outlook SMTP
       await emailService.sendRegistrationConfirmation(email, {
         firstName,
@@ -117,6 +125,7 @@ class RegistrationController {
           email: user.email,
           tempPassword: userPassword,
         },
+        token, // Include JWT token for immediate authentication
       });
     } catch (error) {
       console.error('Registration error:', error);
