@@ -26,6 +26,8 @@ class PaymentService {
         };
       }
 
+      console.log('Creating Razorpay order with:', { amount, currency, receipt, notes });
+
       const options = {
         amount: amount * 100, // Razorpay expects amount in paise
         currency,
@@ -34,9 +36,15 @@ class PaymentService {
       };
 
       const order = await this.razorpay.orders.create(options);
+      console.log('Razorpay order created successfully:', order.id);
       return { success: true, order };
     } catch (error) {
       console.error('Razorpay order creation failed:', error);
+      console.error('Error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        response: error.response?.data
+      });
       return { success: false, error: error.message };
     }
   }
@@ -66,6 +74,8 @@ class PaymentService {
 
   async processRegistrationPayment(userId, registrationId, amount) {
     try {
+      console.log('Processing registration payment:', { userId, registrationId, amount });
+      
       // Create payment record
       const payment = await prisma.payment.create({
         data: {
@@ -76,6 +86,8 @@ class PaymentService {
           status: 'PENDING',
         },
       });
+      
+      console.log('Payment record created:', payment);
 
       // Create Razorpay order
       const orderResult = await this.createOrder(

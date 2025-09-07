@@ -2,12 +2,40 @@ import paymentService from '../services/paymentService.js';
 import { prisma } from '../config/database.js';
 
 class PaymentController {
+  async testPaymentService(req, res) {
+    try {
+      const paymentService = require('../services/paymentService.js').default;
+      return res.json({
+        success: true,
+        message: 'Payment service test',
+        data: {
+          isConfigured: paymentService.isConfigured,
+          hasRazorpay: !!paymentService.razorpay
+        }
+      });
+    } catch (error) {
+      console.error('Payment service test error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Payment service test failed',
+        error: error.message
+      });
+    }
+  }
+
   async createPaymentOrder(req, res) {
     try {
+      console.log('Payment order request:', {
+        body: req.body,
+        user: req.user,
+        headers: req.headers
+      });
+      
       const { userId, registrationId, amount, currency = 'INR' } = req.body;
 
       // Validate required fields
       if (!userId || !amount) {
+        console.log('Validation failed:', { userId, amount });
         return res.status(400).json({
           success: false,
           message: 'User ID and amount are required'
@@ -41,20 +69,27 @@ class PaymentController {
         });
       }
 
-      // Log the payment attempt
-      await prisma.activityLog.create({
-        data: {
-          userId: req.user.id,
-          action: 'CREATE_PAYMENT_ORDER',
-          details: {
-            targetUserId: userId,
-            amount,
-            currency,
-            paymentId: result.payment.id,
-            razorpayOrderId: result.razorpayOrder.id
-          }
+      // Log the payment attempt (optional - don't fail if logging fails)
+      try {
+        if (req.user && req.user.id) {
+          await prisma.activityLog.create({
+            data: {
+              userId: req.user.id,
+              action: 'CREATE_PAYMENT_ORDER',
+              details: {
+                targetUserId: userId,
+                amount,
+                currency,
+                paymentId: result.payment.id,
+                razorpayOrderId: result.razorpayOrder.id
+              }
+            }
+          });
         }
-      });
+      } catch (logError) {
+        console.warn('Failed to log payment activity:', logError);
+        // Don't fail the payment if logging fails
+      }
 
       res.json({
         success: true,

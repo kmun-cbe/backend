@@ -9,6 +9,9 @@ import {
 
 const router = express.Router();
 
+// Test endpoint (no auth required)
+router.get('/test', paymentController.testPaymentService);
+
 // Apply authentication to all payment routes
 router.use(authenticateToken);
 
