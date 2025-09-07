@@ -1,10 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/database.js';
 import bcrypt from 'bcryptjs';
 import fileUploadService from '../services/fileUploadService.js';
 import emailService from '../services/emailService.js';
 import paymentService from '../services/paymentService.js';
-
-const prisma = new PrismaClient();
 
 class RegistrationController {
   async createRegistration(req, res) {

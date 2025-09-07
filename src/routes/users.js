@@ -1,11 +1,10 @@
 import express from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../config/database.js';
 import bcrypt from 'bcryptjs';
 import { authenticateToken, authorizeRoles } from '../middleware/auth.js';
 import emailService from '../services/emailService.js';
 
 const router = express.Router();
-const prisma = new PrismaClient();
 
 // Get all users
 router.get('/', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'), async (req, res) => {
