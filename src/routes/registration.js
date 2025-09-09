@@ -7,7 +7,7 @@ import fileUploadService from '../services/fileUploadService.js';
 
 const router = express.Router();
 
-// Registration validation
+// Registration validation - simplified for FormData
 const registrationValidation = [
   body('fullName').trim().isLength({ min: 2, max: 100 }).withMessage('Full name is required'),
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
@@ -16,11 +16,8 @@ const registrationValidation = [
   body('isKumaraguru').isIn(['yes', 'no']).withMessage('Kumaraguru institution status is required'),
   body('totalMuns').notEmpty().withMessage('Total MUNs attended is required'),
   body('committeePreference1').notEmpty().withMessage('Committee preference 1 is required'),
-  body('portfolioPreference1_1').notEmpty().withMessage('Portfolio preference 1 is required'),
   body('committeePreference2').notEmpty().withMessage('Committee preference 2 is required'),
-  body('portfolioPreference2_1').notEmpty().withMessage('Portfolio preference 2 is required'),
   body('committeePreference3').notEmpty().withMessage('Committee preference 3 is required'),
-  body('portfolioPreference3_1').notEmpty().withMessage('Portfolio preference 3 is required'),
 ];
 
 // File upload middleware
@@ -41,6 +38,14 @@ router.get('/health', (req, res) => {
   });
 });
 
+// Simple registration route for testing (without validation middleware)
+router.post(
+  '/simple',
+  uploadMiddleware,
+  registrationController.createRegistration
+);
+
+// Full registration route with validation
 router.post(
   '/',
   uploadMiddleware,
