@@ -74,54 +74,111 @@ class RegistrationController {
         });
       }
 
-      // Generate custom user ID
-      const customUserId = await userIdService.generateUserId();
-      console.log('Generated custom user ID:', customUserId);
+      // Check if user already exists
+      let user = await prisma.user.findFirst({ where: { email } });
+      let isNewUser = false;
+      let userPassword = null;
+      
+      if (user) {
+        console.log('User already exists, using existing user:', user.id);
+        // Update user information if needed
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            firstName,
+            lastName,
+            phone,
+          },
+        });
+      } else {
+        isNewUser = true;
+        // Generate custom user ID for new user
+        const customUserId = await userIdService.generateUserId();
+        console.log('Generated custom user ID:', customUserId);
 
-      // Create user account first
-      const userPassword = `Iam${firstName}1!@#`;
-      const hashedPassword = await bcrypt.hash(userPassword, 12);
+        // Create user account
+        userPassword = `Iam${firstName}1!@#`;
+        const hashedPassword = await bcrypt.hash(userPassword, 12);
 
-      const user = await prisma.user.create({
-        data: {
-          userId: customUserId,
-          firstName,
-          lastName,
-          email,
-          password: hashedPassword,
-          phone,
-          role: 'PARTICIPANT',
-        },
+        user = await prisma.user.create({
+          data: {
+            userId: customUserId,
+            firstName,
+            lastName,
+            email,
+            password: hashedPassword,
+            phone,
+            role: 'PARTICIPANT',
+          },
+        });
+      }
+
+      // Check if user already has a registration form
+      let registration = await prisma.registrationForm.findFirst({
+        where: { userId: user.id }
       });
 
-      // Create registration form
-      const registration = await prisma.registrationForm.create({
-        data: {
-          userId: user.id,
-          firstName,
-          lastName,
-          email,
-          phone,
-          gender,
-          isKumaraguru: isKumaraguru === 'yes',
-          rollNumber,
-          institutionType,
-          institution,
-          cityOfInstitution,
-          stateOfInstitution,
-          grade,
-          totalMuns: parseInt(totalMuns) || 0,
-          requiresAccommodation: requiresAccommodation === 'yes',
-          committeePreference1,
-          portfolioPreference1: portfolioPreference1 || '',
-          committeePreference2,
-          portfolioPreference2: portfolioPreference2 || '',
-          committeePreference3,
-          portfolioPreference3: portfolioPreference3 || '',
-          idDocument: req.files.idDocument[0].path,
-          munResume: req.files.munResume ? req.files.munResume[0].path : null,
-        },
-      });
+      if (registration) {
+        console.log('User already has a registration form, updating existing one:', registration.id);
+        // Update existing registration form
+        registration = await prisma.registrationForm.update({
+          where: { id: registration.id },
+          data: {
+            firstName,
+            lastName,
+            email,
+            phone,
+            gender,
+            isKumaraguru: isKumaraguru === 'yes',
+            rollNumber,
+            institutionType,
+            institution,
+            cityOfInstitution,
+            stateOfInstitution,
+            grade,
+            totalMuns: parseInt(totalMuns) || 0,
+            requiresAccommodation: requiresAccommodation === 'yes',
+            committeePreference1,
+            portfolioPreference1: portfolioPreference1 || '',
+            committeePreference2,
+            portfolioPreference2: portfolioPreference2 || '',
+            committeePreference3,
+            portfolioPreference3: portfolioPreference3 || '',
+            idDocument: req.files.idDocument[0].path,
+            munResume: req.files.munResume ? req.files.munResume[0].path : null,
+            status: 'PENDING', // Reset status to pending for updated registration
+          },
+        });
+      } else {
+        // Create new registration form
+        registration = await prisma.registrationForm.create({
+          data: {
+            userId: user.id,
+            firstName,
+            lastName,
+            email,
+            phone,
+            gender,
+            isKumaraguru: isKumaraguru === 'yes',
+            rollNumber,
+            institutionType,
+            institution,
+            cityOfInstitution,
+            stateOfInstitution,
+            grade,
+            totalMuns: parseInt(totalMuns) || 0,
+            requiresAccommodation: requiresAccommodation === 'yes',
+            committeePreference1,
+            portfolioPreference1: portfolioPreference1 || '',
+            committeePreference2,
+            portfolioPreference2: portfolioPreference2 || '',
+            committeePreference3,
+            portfolioPreference3: portfolioPreference3 || '',
+            idDocument: req.files.idDocument[0].path,
+            munResume: req.files.munResume ? req.files.munResume[0].path : null,
+          },
+        });
+      }
 
       // Generate JWT token for immediate authentication
       const token = jwt.sign(
@@ -154,7 +211,7 @@ class RegistrationController {
           id: user.id,
           userId: user.userId,
           email: user.email,
-          tempPassword: userPassword,
+          tempPassword: isNewUser ? userPassword : undefined, // Only include temp password for new users
         },
         token, // Include JWT token for immediate authentication
       });
