@@ -165,6 +165,8 @@ class RegistrationController {
   async getRegistrations(req, res) {
     try {
       console.log('Starting getRegistrations...');
+      console.log('Request headers:', req.headers);
+      console.log('Request user:', req.user);
       
       // First, test basic database connection
       const totalCount = await prisma.registrationForm.count();
@@ -234,7 +236,7 @@ class RegistrationController {
 
       console.log(`Returning ${registrationsWithUsers.length} registrations with user data`);
 
-      res.json({
+      res.status(200).json({
         success: true,
         data: {
           registrations: registrationsWithUsers,
@@ -253,6 +255,7 @@ class RegistrationController {
         success: false,
         message: 'Failed to get registrations',
         error: error.message,
+        timestamp: new Date().toISOString(),
       });
     }
   }

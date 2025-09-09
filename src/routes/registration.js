@@ -32,6 +32,15 @@ const uploadMiddleware = fileUploadService.documentUpload.fields([
 // Routes
 router.get('/test', registrationController.testConnection);
 
+router.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Registration API is healthy',
+    timestamp: new Date().toISOString(),
+    endpoint: '/api/registrations/health'
+  });
+});
+
 router.post(
   '/',
   uploadMiddleware,
@@ -48,16 +57,16 @@ router.get(
 );
 
 router.get(
-  '/my-registration',
-  authenticateToken,
-  registrationController.getMyRegistration
-);
-
-router.get(
   '/stats',
   authenticateToken,
   authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),
   registrationController.getRegistrationStats
+);
+
+router.get(
+  '/my-registration',
+  authenticateToken,
+  registrationController.getMyRegistration
 );
 
 router.get(
