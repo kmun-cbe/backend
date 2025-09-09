@@ -30,6 +30,8 @@ const uploadMiddleware = fileUploadService.documentUpload.fields([
 ]);
 
 // Routes
+router.get('/test', registrationController.testConnection);
+
 router.post(
   '/',
   uploadMiddleware,

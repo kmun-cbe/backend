@@ -7,6 +7,24 @@ import paymentService from '../services/paymentService.js';
 import userIdService from '../services/userIdService.js';
 
 class RegistrationController {
+  async testConnection(req, res) {
+    try {
+      const count = await prisma.registrationForm.count();
+      res.json({
+        success: true,
+        message: 'Database connection successful',
+        count: count
+      });
+    } catch (error) {
+      console.error('Database connection test error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Database connection failed',
+        error: error.message
+      });
+    }
+  }
+
   async createRegistration(req, res) {
     try {
       const {
@@ -146,15 +164,22 @@ class RegistrationController {
 
   async getRegistrations(req, res) {
     try {
+      console.log('Starting getRegistrations...');
+      
+      // First, test basic database connection
+      const totalCount = await prisma.registrationForm.count();
+      console.log(`Total registrations in database: ${totalCount}`);
+
       const {
         page = 1,
         limit = 10,
         status,
-        paymentStatus,
         search,
         sortBy = 'submittedAt',
         sortOrder = 'desc',
       } = req.query;
+
+      console.log('Get registrations query params:', { page, limit, status, search, sortBy, sortOrder });
 
       const offset = (page - 1) * limit;
       const where = {};
@@ -173,33 +198,46 @@ class RegistrationController {
         ];
       }
 
-      const [registrations, total] = await Promise.all([
-        prisma.registrationForm.findMany({
-          where,
-          include: {
-            user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-                phone: true,
-              },
-            },
-          },
-          skip: offset,
-          take: parseInt(limit),
-          orderBy: {
-            [sortBy]: normalizedSortOrder,
-          },
-        }),
-        prisma.registrationForm.count({ where }),
-      ]);
+      console.log('Where clause:', where);
+
+      // Validate sortBy field
+      const validSortFields = ['submittedAt', 'createdAt', 'updatedAt', 'firstName', 'lastName', 'email', 'status'];
+      const finalSortBy = validSortFields.includes(sortBy) ? sortBy : 'submittedAt';
+
+      // Get registrations with simple query first
+      const registrations = await prisma.registrationForm.findMany({
+        where,
+        skip: offset,
+        take: parseInt(limit),
+        orderBy: {
+          [finalSortBy]: normalizedSortOrder,
+        },
+      });
+
+      console.log(`Found ${registrations.length} registrations`);
+
+      // Get total count
+      const total = await prisma.registrationForm.count({ where });
+
+      // Add user data to each registration
+      const registrationsWithUsers = registrations.map(registration => ({
+        ...registration,
+        user: {
+          id: registration.userId,
+          firstName: registration.firstName,
+          lastName: registration.lastName,
+          email: registration.email,
+          phone: registration.phone,
+          userId: null, // This would need to be fetched separately if needed
+        }
+      }));
+
+      console.log(`Returning ${registrationsWithUsers.length} registrations with user data`);
 
       res.json({
         success: true,
         data: {
-          registrations,
+          registrations: registrationsWithUsers,
           pagination: {
             total,
             page: parseInt(page),
@@ -210,6 +248,7 @@ class RegistrationController {
       });
     } catch (error) {
       console.error('Get registrations error:', error);
+      console.error('Error stack:', error.stack);
       res.status(500).json({
         success: false,
         message: 'Failed to get registrations',
