@@ -164,13 +164,12 @@ class RegistrationController {
 
       // Apply filters
       if (status) where.status = status;
-      if (paymentStatus) where.paymentStatus = paymentStatus;
       if (search) {
-        where[Op.or] = [
-          { firstName: { [Op.iLike]: `%${search}%` } },
-          { lastName: { [Op.iLike]: `%${search}%` } },
-          { email: { [Op.iLike]: `%${search}%` } },
-          { institution: { [Op.iLike]: `%${search}%` } },
+        where.OR = [
+          { firstName: { contains: search, mode: 'insensitive' } },
+          { lastName: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { institution: { contains: search, mode: 'insensitive' } },
         ];
       }
 
@@ -223,7 +222,7 @@ class RegistrationController {
     try {
       const { id } = req.params;
 
-      const registration = await prisma.registration.findUnique({
+      const registration = await prisma.registrationForm.findUnique({
         where: { id },
         include: {
           user: {
@@ -264,7 +263,7 @@ class RegistrationController {
       const { id } = req.params;
       const { status, allocatedCommittee, allocatedPortfolio } = req.body;
 
-      const registration = await prisma.registration.findUnique({
+      const registration = await prisma.registrationForm.findUnique({
         where: { id },
         include: { user: true },
       });
@@ -276,7 +275,7 @@ class RegistrationController {
         });
       }
 
-      const updatedRegistration = await prisma.registration.update({
+      const updatedRegistration = await prisma.registrationForm.update({
         where: { id },
         data: {
           status,
@@ -315,7 +314,7 @@ class RegistrationController {
     try {
       const { id } = req.params;
 
-      const registration = await prisma.registration.findUnique({
+      const registration = await prisma.registrationForm.findUnique({
         where: { id },
       });
       
@@ -334,7 +333,7 @@ class RegistrationController {
         await fileUploadService.deleteFile(registration.munResume);
       }
 
-      await prisma.registration.delete({
+      await prisma.registrationForm.delete({
         where: { id },
       });
 
@@ -354,21 +353,18 @@ class RegistrationController {
 
   async getRegistrationStats(req, res) {
     try {
-      const stats = await prisma.registration.groupBy({
-        by: ['status', 'paymentStatus'],
+      const stats = await prisma.registrationForm.groupBy({
+        by: ['status'],
         _count: {
           id: true,
         },
       });
 
-      const totalRegistrations = await prisma.registration.count();
-      const confirmedRegistrations = await prisma.registration.count({
+      const totalRegistrations = await prisma.registrationForm.count();
+      const confirmedRegistrations = await prisma.registrationForm.count({
         where: { status: 'CONFIRMED' },
       });
-      const paidRegistrations = await prisma.registration.count({
-        where: { paymentStatus: 'PAID' },
-      });
-      const allocatedRegistrations = await prisma.registration.count({
+      const allocatedRegistrations = await prisma.registrationForm.count({
         where: {
           allocatedCommittee: { not: null },
           allocatedPortfolio: { not: null },
@@ -380,7 +376,6 @@ class RegistrationController {
         stats: {
           total: totalRegistrations,
           confirmed: confirmedRegistrations,
-          paid: paidRegistrations,
           allocated: allocatedRegistrations,
           byStatus: stats,
         },
