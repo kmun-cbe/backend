@@ -268,17 +268,20 @@ router.put('/:id/password', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFT
 // Delete user
 router.delete('/:id', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'), async (req, res) => {
   try {
-    await prisma.user.delete({
-      where: { id: req.params.id }
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { isActive: false, updatedAt: new Date() },
+      select: { id: true }
     });
-    
-    res.json({ 
+
+    return res.json({ 
       success: true,
-      message: 'User deleted successfully' 
+      message: 'User deactivated successfully',
+      data: { id: user.id }
     });
   } catch (error) {
     console.error('Delete user error:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       success: false,
       message: 'Failed to delete user',
       error: error.message 

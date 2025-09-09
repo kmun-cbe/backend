@@ -1,4 +1,36 @@
 import { prisma } from '../config/database.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = 'uploads/gallery';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  }
+});
 
 class GalleryController {
   async getGalleryItems(req, res) {
@@ -61,12 +93,13 @@ class GalleryController {
   async createGalleryItem(req, res) {
     try {
       const { title, type, imageUrl, videoUrl, category } = req.body;
+      const imageFile = req.file;
 
       // Validate required fields
-      if (!title || !type || !imageUrl || !category) {
+      if (!title || !type || !category) {
         return res.status(400).json({
           success: false,
-          message: 'Title, type, imageUrl, and category are required',
+          message: 'Title, type, and category are required',
         });
       }
 
@@ -86,11 +119,26 @@ class GalleryController {
         });
       }
 
+      // Check if image is provided (either file or URL)
+      if (!imageFile && !imageUrl) {
+        return res.status(400).json({
+          success: false,
+          message: 'Image file or image URL is required',
+        });
+      }
+
+      let finalImageUrl = imageUrl;
+      
+      // If image file is uploaded, use the file path
+      if (imageFile) {
+        finalImageUrl = `/uploads/gallery/${imageFile.filename}`;
+      }
+
       const galleryItem = await prisma.galleryItem.create({
         data: {
           title,
           type,
-          imageUrl,
+          imageUrl: finalImageUrl,
           videoUrl: type === 'video' ? videoUrl : null,
           category,
         },
@@ -115,6 +163,7 @@ class GalleryController {
     try {
       const { id } = req.params;
       const { title, type, imageUrl, videoUrl, category } = req.body;
+      const imageFile = req.file;
 
       // Validate type if provided
       if (type && !['image', 'video'].includes(type)) {
@@ -124,15 +173,23 @@ class GalleryController {
         });
       }
 
+      let finalImageUrl = imageUrl;
+      
+      // If image file is uploaded, use the file path
+      if (imageFile) {
+        finalImageUrl = `/uploads/gallery/${imageFile.filename}`;
+      }
+
+      const updateData = {};
+      if (title) updateData.title = title;
+      if (type) updateData.type = type;
+      if (finalImageUrl) updateData.imageUrl = finalImageUrl;
+      if (videoUrl) updateData.videoUrl = videoUrl;
+      if (category) updateData.category = category;
+
       const galleryItem = await prisma.galleryItem.update({
         where: { id },
-        data: {
-          ...(title && { title }),
-          ...(type && { type }),
-          ...(imageUrl && { imageUrl }),
-          ...(videoUrl && { videoUrl }),
-          ...(category && { category }),
-        },
+        data: updateData,
       });
 
       res.json({
@@ -198,4 +255,5 @@ class GalleryController {
 }
 
 export default new GalleryController();
+export { upload };
 
