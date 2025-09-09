@@ -133,6 +133,7 @@ class AuthController {
       const user = await prisma.user.findUnique({
         where: { id: req.user.id },
         include: {
+          registrationForms: true,
           registrations: true,
         },
       });

@@ -46,6 +46,12 @@ router.get(
 );
 
 router.get(
+  '/my-registration',
+  authenticateToken,
+  registrationController.getMyRegistration
+);
+
+router.get(
   '/stats',
   authenticateToken,
   authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN', 'SUPER_ADMIN', 'REGISTRATION_ADMIN'),

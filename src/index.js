@@ -20,7 +20,6 @@ import eventRoutes from './routes/events.js';
 import attendanceRoutes from './routes/attendance.js';
 import marksRoutes from './routes/marks.js';
 import contactRoutes from './routes/contact.js';
-import notificationRoutes from './routes/notifications.js';
 import popupRoutes from './routes/popups.js';
 import resourceRoutes from './routes/resources.js';
 import activityLogRoutes from './routes/activityLogs.js';
@@ -59,7 +58,6 @@ app.use('/api/events', eventRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/marks', marksRoutes);
 app.use('/api/contact', contactRoutes);
-app.use('/api/notifications', notificationRoutes);
 app.use('/api/popups', popupRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/activity-logs', activityLogRoutes);
@@ -98,7 +96,6 @@ app.get('/', (req, res) => {
       attendance: '/api/attendance',
       marks: '/api/marks',
       contact: '/api/contact',
-      notifications: '/api/notifications',
       popups: '/api/popups',
       resources: '/api/resources',
       activityLogs: '/api/activity-logs',

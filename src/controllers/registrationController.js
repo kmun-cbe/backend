@@ -218,6 +218,50 @@ class RegistrationController {
     }
   }
 
+  async getMyRegistration(req, res) {
+    try {
+      const userId = req.user.id;
+
+      const registration = await prisma.registrationForm.findFirst({
+        where: { userId },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              userId: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      if (!registration) {
+        return res.status(404).json({
+          success: false,
+          message: 'No registration found for this user',
+        });
+      }
+
+      res.json({
+        success: true,
+        registration,
+      });
+    } catch (error) {
+      console.error('Get my registration error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get registration',
+        error: error.message,
+      });
+    }
+  }
+
   async getRegistrationById(req, res) {
     try {
       const { id } = req.params;
