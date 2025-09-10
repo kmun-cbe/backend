@@ -72,8 +72,12 @@ router.post('/', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'
     // Generate custom user ID
     const customUserId = await userIdService.generateUserId();
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Generate custom password: Iam<phone number (trimmed)>!@#
+    const trimmedPhone = phone.replace(/\D/g, ''); // Remove all non-digits
+    const customPassword = `Iam${trimmedPhone}!@#`;
+    
+    // Hash the custom password
+    const hashedPassword = await bcrypt.hash(customPassword, 12);
 
     // Create user
     const user = await prisma.user.create({
@@ -110,7 +114,7 @@ router.post('/', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'
         firstName,
         lastName,
         email,
-        password,
+        password: customPassword, // Use the generated custom password
         role: role || 'DELEGATE'
       }, 'outlook');
     } catch (emailError) {

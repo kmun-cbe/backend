@@ -96,8 +96,9 @@ class RegistrationController {
         const customUserId = await userIdService.generateUserId();
         console.log('Generated custom user ID:', customUserId);
 
-        // Create user account
-        userPassword = `Iam${firstName}1!@#`;
+        // Generate custom password: Iam<phone number (trimmed)>!@#
+        const trimmedPhone = phone.replace(/\D/g, ''); // Remove all non-digits
+        userPassword = `Iam${trimmedPhone}!@#`;
         const hashedPassword = await bcrypt.hash(userPassword, 12);
 
         user = await prisma.user.create({
@@ -191,13 +192,32 @@ class RegistrationController {
       await emailService.sendRegistrationConfirmation(email, {
         firstName,
         lastName,
+        email,
         registrationId: registration.id,
+        userId: user.userId,
+        transactionId: `TXN-${registration.id.slice(-8).toUpperCase()}`, // Generate transaction ID
         paymentAmount: 150, // Base registration fee
         institution: institution || 'N/A',
         committeePreference1,
         committeePreference2,
         committeePreference3,
       }, 'outlook');
+
+      // Send welcome email for new users with login credentials
+      if (isNewUser && userPassword) {
+        try {
+          await emailService.sendWelcomeEmail(email, {
+            firstName,
+            lastName,
+            email,
+            password: userPassword,
+            role: 'DELEGATE'
+          }, 'outlook');
+        } catch (welcomeEmailError) {
+          console.error('Failed to send welcome email:', welcomeEmailError);
+          // Don't fail the registration if welcome email fails
+        }
+      }
 
       res.status(201).json({
         success: true,
