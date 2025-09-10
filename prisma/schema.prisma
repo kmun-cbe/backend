@@ -44,6 +44,9 @@ model User {
   // Payments
   payments          Payment[]
   
+  // Activity logs
+  activityLogs      ActivityLog[]
+  
   @@map("users")
 }
 
@@ -300,4 +303,21 @@ model GalleryItem {
   updatedAt   DateTime @updatedAt
 
   @@map("gallery_items")
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  
+  user User @relation(fields: [userId], references: [id])
+  
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("activity_logs")
 }

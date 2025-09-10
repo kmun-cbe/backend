@@ -82,7 +82,9 @@ class PaymentController {
                 currency,
                 paymentId: result.payment.id,
                 razorpayOrderId: result.razorpayOrder.id
-              }
+              },
+              ipAddress: req.ip,
+              userAgent: req.get('User-Agent')
             }
           });
         }
@@ -138,7 +140,9 @@ class PaymentController {
               paymentId,
               razorpayPaymentId,
               error: result.error
-            }
+            },
+            ipAddress: req.ip,
+            userAgent: req.get('User-Agent')
           }
         });
 
@@ -159,7 +163,9 @@ class PaymentController {
             razorpayPaymentId,
             amount: result.payment.amount,
             status: result.payment.status
-          }
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent')
         }
       });
 
@@ -348,7 +354,9 @@ class PaymentController {
             refundAmount: amount,
             reason,
             razorpayRefundId: result.refund.id
-          }
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('User-Agent')
         }
       });
 
