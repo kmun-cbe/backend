@@ -28,4 +28,9 @@ router.post('/test',
   mailerController.sendTestEmail
 );
 
+// Send payment success email
+router.post('/send-payment-success',
+  mailerController.sendPaymentSuccessEmail
+);
+
 export default router;

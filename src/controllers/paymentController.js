@@ -397,14 +397,13 @@ class PaymentController {
                 email: true
               }
             },
-            registration: {
+            registrationForm: {
               select: {
                 id: true,
-                committee: {
-                  select: {
-                    name: true
-                  }
-                }
+                committeePreference1: true,
+                committeePreference2: true,
+                committeePreference3: true,
+                allocatedCommittee: true
               }
             }
           },

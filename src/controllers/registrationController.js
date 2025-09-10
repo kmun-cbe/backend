@@ -491,8 +491,20 @@ class RegistrationController {
     try {
       const { id } = req.params;
 
+      // Get registration with user details for email
       const registration = await prisma.registrationForm.findUnique({
         where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              userId: true
+            }
+          }
+        }
       });
       
       if (!registration) {
@@ -500,6 +512,91 @@ class RegistrationController {
           success: false,
           message: 'Registration not found',
         });
+      }
+
+      const userEmail = registration.user.email;
+      const userName = `${registration.user.firstName} ${registration.user.lastName}`;
+      const userCustomId = registration.user.userId;
+
+      // Send deletion notification email via Outlook
+      try {
+        const emailService = (await import('../services/emailService.js')).default;
+        
+        const emailSubject = 'Registration Deletion Notification - Kumaraguru MUN 2025';
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+              <h1 style="margin: 0; font-size: 28px;">Kumaraguru MUN 2025</h1>
+              <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Registration Deletion Notification</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef;">
+              <h2 style="color: #dc3545; margin-top: 0;">Registration Deleted</h2>
+              
+              <p>Dear <strong>${userName}</strong> (${userCustomId}),</p>
+              
+              <p>We regret to inform you that your registration for Kumaraguru MUN 2025 has been deleted from our system.</p>
+              
+              <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #dc3545; margin: 20px 0;">
+                <h3 style="margin-top: 0; color: #dc3545;">Registration Details:</h3>
+                <p><strong>Name:</strong> ${userName}</p>
+                <p><strong>User ID:</strong> ${userCustomId}</p>
+                <p><strong>Email:</strong> ${userEmail}</p>
+                <p><strong>Deletion Date:</strong> ${new Date().toLocaleDateString('en-IN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}</p>
+              </div>
+              
+              <p>If you believe this deletion was made in error, please contact our support team immediately.</p>
+              
+              <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 0; color: #1976d2;"><strong>Need Help?</strong></p>
+                <p style="margin: 5px 0 0 0;">Contact us at: <a href="mailto:mun@kct.ac.in" style="color: #1976d2;">mun@kct.ac.in</a></p>
+              </div>
+              
+              <p style="color: #6c757d; font-size: 14px; margin-top: 30px;">
+                This is an automated notification. Please do not reply to this email.
+              </p>
+            </div>
+          </div>
+        `;
+
+        const emailText = `
+          Kumaraguru MUN 2025 - Registration Deletion Notification
+          
+          Dear ${userName} (${userCustomId}),
+          
+          We regret to inform you that your registration for Kumaraguru MUN 2025 has been deleted from our system.
+          
+          Registration Details:
+          - Name: ${userName}
+          - User ID: ${userCustomId}
+          - Email: ${userEmail}
+          - Deletion Date: ${new Date().toLocaleDateString('en-IN')}
+          
+          If you believe this deletion was made in error, please contact our support team immediately.
+          
+          Need Help? Contact us at: support@kumaragurumun.com
+          
+          This is an automated notification. Please do not reply to this email.
+        `;
+
+        await emailService.sendEmail({
+          to: userEmail,
+          subject: emailSubject,
+          html: emailHtml,
+          text: emailText,
+          provider: 'outlook'
+        });
+
+        console.log(`Deletion notification email sent to ${userEmail} via Outlook`);
+      } catch (emailError) {
+        console.error('Failed to send deletion notification email:', emailError);
+        // Continue with deletion even if email fails
       }
 
       // Delete associated files
@@ -510,13 +607,77 @@ class RegistrationController {
         await fileUploadService.deleteFile(registration.munResume);
       }
 
+      // Delete all related records in the correct order to avoid foreign key constraints
+      console.log(`Deleting all related records for user ${userName} (${userCustomId})...`);
+
+      // 1. Delete payments (references registrationId and userId)
+      const deletedPayments = await prisma.payment.deleteMany({
+        where: { userId: registration.userId }
+      });
+      console.log(`Deleted ${deletedPayments.count} payment records`);
+
+      // 2. Delete activity logs (references userId)
+      const deletedActivityLogs = await prisma.activityLog.deleteMany({
+        where: { userId: registration.userId }
+      });
+      console.log(`Deleted ${deletedActivityLogs.count} activity log records`);
+
+      // 3. Delete marks (references userId)
+      const deletedMarks = await prisma.mark.deleteMany({
+        where: { userId: registration.userId }
+      });
+      console.log(`Deleted ${deletedMarks.count} mark records`);
+
+      // 4. Delete attendance records (references userId)
+      const deletedAttendanceRecords = await prisma.attendanceRecord.deleteMany({
+        where: { userId: registration.userId }
+      });
+      console.log(`Deleted ${deletedAttendanceRecords.count} attendance records`);
+
+      // 5. Delete check-ins (references userId)
+      const deletedCheckIns = await prisma.checkIn.deleteMany({
+        where: { userId: registration.userId }
+      });
+      console.log(`Deleted ${deletedCheckIns.count} check-in records`);
+
+      // 6. Delete registrations (references userId)
+      const deletedRegistrations = await prisma.registration.deleteMany({
+        where: { userId: registration.userId }
+      });
+      console.log(`Deleted ${deletedRegistrations.count} registration records`);
+
+      // 7. Delete the registration form (references userId)
       await prisma.registrationForm.delete({
         where: { id },
       });
+      console.log('Deleted registration form');
+
+      // 8. Finally, delete the user account
+      await prisma.user.delete({
+        where: { id: registration.userId }
+      });
+      console.log('Deleted user account');
+
+      console.log(`Registration and user account deleted for ${userName} (${userCustomId})`);
 
       res.json({
         success: true,
-        message: 'Registration deleted successfully',
+        message: 'Registration, user account, and all related data deleted successfully. Deletion notification email sent.',
+        data: {
+          deletedUser: {
+            name: userName,
+            email: userEmail,
+            userId: userCustomId
+          },
+          deletedRecords: {
+            payments: deletedPayments.count,
+            activityLogs: deletedActivityLogs.count,
+            marks: deletedMarks.count,
+            attendanceRecords: deletedAttendanceRecords.count,
+            checkIns: deletedCheckIns.count,
+            registrations: deletedRegistrations.count
+          }
+        }
       });
     } catch (error) {
       console.error('Delete registration error:', error);
