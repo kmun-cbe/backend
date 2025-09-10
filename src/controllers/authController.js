@@ -8,7 +8,7 @@ import userIdService from '../services/userIdService.js';
 class AuthController {
   async register(req, res) {
     try {
-      const { firstName, lastName, email, password, phone, role = 'PARTICIPANT' } = req.body;
+      const { firstName, lastName, email, password, phone, role = 'DELEGATE' } = req.body;
 
       // Check if user already exists
       const existingUser = await prisma.user.findFirst({ where: { email } });

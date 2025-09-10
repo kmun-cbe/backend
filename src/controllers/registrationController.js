@@ -108,7 +108,7 @@ class RegistrationController {
             email,
             password: hashedPassword,
             phone,
-            role: 'PARTICIPANT',
+            role: 'DELEGATE',
           },
         });
       }

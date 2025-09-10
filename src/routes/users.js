@@ -85,7 +85,7 @@ router.post('/', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'
         phone,
         school,
         grade,
-        role: role || 'PARTICIPANT',
+        role: role || 'DELEGATE',
         password: hashedPassword,
         isActive: true
       },
@@ -111,7 +111,7 @@ router.post('/', authenticateToken, authorizeRoles('DEV_ADMIN', 'SOFTWARE_ADMIN'
         lastName,
         email,
         password,
-        role: role || 'PARTICIPANT'
+        role: role || 'DELEGATE'
       }, 'outlook');
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);

@@ -280,7 +280,7 @@ model EmailTemplate {
 // UserRole enum replaced with String for compatibility
 // Valid values: DELEGATE, COMMITTEE_DIRECTOR, DELEGATE_AFFAIRS, HOSPITALITY_ADMIN, 
 // FRONT_DESK_ADMIN, DEV_ADMIN, SOFTWARE_ADMIN, REGISTRATION_ADMIN, 
-// ALLOCATION_ADMIN, EXECUTIVE_BOARD, PARTICIPANT
+// ALLOCATION_ADMIN, EXECUTIVE_BOARD
 
 // RegistrationStatus enum replaced with String for compatibility
 // Valid values: PENDING, APPROVED, REJECTED, WAITLISTED
