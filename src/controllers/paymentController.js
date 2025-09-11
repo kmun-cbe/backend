@@ -114,12 +114,49 @@ class PaymentController {
 
   async verifyPayment(req, res) {
     try {
+      console.log('Payment verification request:', {
+        body: req.body,
+        user: req.user,
+        headers: req.headers
+      });
+
       const { paymentId, razorpayPaymentId, razorpaySignature } = req.body;
 
-      if (!paymentId || !razorpayPaymentId || !razorpaySignature) {
+      // Validate required fields with detailed error messages
+      if (!paymentId) {
         return res.status(400).json({
           success: false,
-          message: 'Payment ID, Razorpay Payment ID, and signature are required'
+          message: 'Payment ID is required',
+          field: 'paymentId'
+        });
+      }
+
+      if (!razorpayPaymentId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Razorpay Payment ID is required',
+          field: 'razorpayPaymentId'
+        });
+      }
+
+      if (!razorpaySignature) {
+        return res.status(400).json({
+          success: false,
+          message: 'Razorpay Signature is required',
+          field: 'razorpaySignature'
+        });
+      }
+
+      // Check if payment exists
+      const existingPayment = await prisma.payment.findUnique({
+        where: { id: paymentId }
+      });
+
+      if (!existingPayment) {
+        return res.status(404).json({
+          success: false,
+          message: 'Payment not found',
+          paymentId
         });
       }
 
@@ -131,43 +168,58 @@ class PaymentController {
       );
 
       if (!result.success) {
+        console.error('Payment verification failed:', result.error);
+        
         // Log failed payment verification
+        try {
+          await prisma.activityLog.create({
+            data: {
+              userId: req.user.id,
+              action: 'PAYMENT_VERIFICATION_FAILED',
+              details: {
+                paymentId,
+                razorpayPaymentId,
+                error: result.error
+              },
+              ipAddress: req.ip,
+              userAgent: req.get('User-Agent')
+            }
+          });
+        } catch (logError) {
+          console.warn('Failed to log payment verification failure:', logError);
+        }
+
+        return res.status(400).json({
+          success: false,
+          message: 'Payment verification failed',
+          error: result.error,
+          paymentId,
+          razorpayPaymentId
+        });
+      }
+
+      // Log successful payment verification
+      try {
         await prisma.activityLog.create({
           data: {
             userId: req.user.id,
-            action: 'PAYMENT_VERIFICATION_FAILED',
+            action: 'PAYMENT_VERIFIED',
             details: {
               paymentId,
               razorpayPaymentId,
-              error: result.error
+              amount: result.payment.amount,
+              status: result.payment.status
             },
             ipAddress: req.ip,
             userAgent: req.get('User-Agent')
           }
         });
-
-        return res.status(400).json({
-          success: false,
-          message: 'Payment verification failed',
-          error: result.error
-        });
+      } catch (logError) {
+        console.warn('Failed to log successful payment verification:', logError);
+        // Don't fail the payment if logging fails
       }
 
-      // Log successful payment verification
-      await prisma.activityLog.create({
-        data: {
-          userId: req.user.id,
-          action: 'PAYMENT_VERIFIED',
-          details: {
-            paymentId,
-            razorpayPaymentId,
-            amount: result.payment.amount,
-            status: result.payment.status
-          },
-          ipAddress: req.ip,
-          userAgent: req.get('User-Agent')
-        }
-      });
+      console.log('Payment verification successful:', result.payment);
 
       res.json({
         success: true,

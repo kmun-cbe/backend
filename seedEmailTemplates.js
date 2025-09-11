@@ -96,7 +96,7 @@ const emailTemplates = [
             </div>
             
             <div style="text-align: center; margin: 35px 0;">
-              <a href="https://kmun.kct.ac.in/login" class="button">Access Your Dashboard</a>
+              <a href="https://mun.kumaraguru.in/login" class="button">Access Your Dashboard</a>
             </div>
             
             <div class="next-steps">
@@ -267,13 +267,13 @@ const emailTemplates = [
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://kmun.kct.ac.in/login" class="button">Login to Your Account</a>
+              <a href="https://mun.kumaraguru.in/login" class="button">Login to Your Account</a>
             </div>
             
             <div style="text-align: center; margin: 20px 0; padding: 15px; background: #e8f4fd; border-radius: 8px;">
               <p style="margin: 0; color: #172d9d; font-weight: bold;">🔗 Direct Login Link:</p>
               <p style="margin: 5px 0; font-family: monospace; word-break: break-all;">
-                <a href="https://kmun.kct.ac.in/login" style="color: #172d9d; text-decoration: none;">https://kmun.kct.ac.in/login</a>
+                <a href="https://mun.kumaraguru.in/login" style="color: #172d9d; text-decoration: none;">https://mun.kumaraguru.in/login</a>
               </p>
             </div>
             
